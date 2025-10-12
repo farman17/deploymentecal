@@ -31,7 +31,7 @@ $export   = $_GET['export'] ?? '';
 // kolom yang boleh disort
 $sortable = [
   'nomor_form','server','site','project','service',
-  'new_version', // <— TAMBAHAN: izinkan sort by New Version
+  'latest_version','new_version', // <— TAMBAHAN: izinkan sort by New Version
   'status','created_at','updated_at'
 ];
 if(!in_array($sort, $sortable, true)) $sort = 'created_at';
@@ -39,12 +39,12 @@ if(!in_array($sort, $sortable, true)) $sort = 'created_at';
 // ===== Filter & pencarian =====
 $where=[];$params=[];
 if($q!==''){
-  // cari juga di version
   $where[]="(nomor_form LIKE :kw OR dev_requestor LIKE :kw OR site LIKE :kw OR project LIKE :kw
              OR service LIKE :kw OR source_branch LIKE :kw
              OR COALESCE(new_version, latest_version) LIKE :kw)";
   $params[':kw']="%$q%";
 }
+
 if($server!==''){ $where[]="server = :srv"; $params[':srv']=$server==='PRODUCTION'?'PRODUCTION':'STAGING'; }
 if($project!==''){ $where[]="project = :prj"; $params[':prj']=$project; }
 if($status!==''){ $where[]="status = :st"; $params[':st']=$status; }

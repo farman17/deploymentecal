@@ -8,7 +8,7 @@
 // ==== DB config via ENV (fallback ke nilai compose/run) ====
 $DB_HOST = getenv('DB_HOST') ?: 'db';
 $DB_PORT = getenv('DB_PORT') ?: '3306';
-$DB_NAME = getenv('DB_NAME') ?: 'deployweb';
+$DB_NAME = getenv('DB_NAME') ?: 'deploymentecal';
 $DB_USER = getenv('DB_USER') ?: 'deployuser';
 $DB_PASS = getenv('DB_PASS') ?: 'secret';
 

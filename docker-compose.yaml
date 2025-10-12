@@ -21,7 +21,7 @@ services:
 
   php:
     build: .
-    container_name: deployweb-php
+    container_name: deploymentweb-php
     environment:
       TZ: Asia/Jakarta
       DB_HOST: db          # host DB = nama service db
@@ -42,7 +42,7 @@ services:
   # OPSIONAL: phpMyAdmin untuk intip DB via browser (http://<IP>:8083)
   phpmyadmin:
     image: phpmyadmin:5-apache
-    container_name: deployweb-pma
+    container_name: deploymenweb-pma
     environment:
       TZ: Asia/Jakarta
       PMA_HOST: db

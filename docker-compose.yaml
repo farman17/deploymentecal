@@ -1,7 +1,7 @@
 services:
   db:
     image: mariadb:10.6
-    container_name: deployweb-mysqlku
+    container_name: deploymentweb-mysql
     environment:
       TZ: Asia/Jakarta
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASS:-changeme}

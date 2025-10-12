@@ -180,14 +180,14 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
             <?php endforeach; ?>
           </select>
         </div>
-        <div><label>Status</label>
-          <select name="status">
-            <option value="">(All)</option>
-            <?php foreach(['OPEN','ON PROCESS','DONE','CLOSED'] as $s): ?>
-                <option value="<?=$s?>" <?=$status===$s?'selected':''?>><?=$s?></option>
-            <?php endforeach; ?>
-          </select>
-        </div>
+        //<div><label>Status</label>
+          //<select name="status">
+            //<option value="">(All)</option>
+            //<?php foreach(['OPEN','ON PROCESS','DONE','CLOSED'] as $s): ?>
+              //  <option value="<?=$s?>" <?=$status===$s?'selected':''?>><?=$s?></option>
+           // <?php endforeach; ?>
+         // </select>
+       // </div>
         <div><label>Dari Tanggal</label><input type="date" name="from" value="<?=h($from)?>"></div>
         <div><label>Sampai Tanggal</label><input type="date" name="to" value="<?=h($to)?>"></div>
         <div><label>Per Halaman</label>

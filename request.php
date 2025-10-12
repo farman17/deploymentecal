@@ -13,9 +13,9 @@ $dbUser = $DB_USER;
 $dbPass = $DB_PASS;
 
 date_default_timezone_set('Asia/Jakarta');
-
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
 
+// ===== Input & default =====
 $q        = trim($_GET['q'] ?? '');
 $server   = strtoupper(trim($_GET['server'] ?? ''));
 $project  = strtoupper(trim($_GET['project'] ?? ''));
@@ -31,12 +31,12 @@ $export   = $_GET['export'] ?? '';
 // kolom yang boleh disort
 $sortable = [
   'nomor_form','server','site','project','service',
-  'latest_version','new_version', // <— TAMBAHAN: izinkan sort by New Version
+  'latest_version','new_version',
   'status','created_at','updated_at'
 ];
 if(!in_array($sort, $sortable, true)) $sort = 'created_at';
 
-// ===== Filter & pencarian =====
+// ===== Build WHERE =====
 $where=[];$params=[];
 if($q!==''){
   $where[]="(nomor_form LIKE :kw OR dev_requestor LIKE :kw OR site LIKE :kw OR project LIKE :kw
@@ -44,7 +44,6 @@ if($q!==''){
              OR COALESCE(new_version, latest_version) LIKE :kw)";
   $params[':kw']="%$q%";
 }
-
 if($server!==''){ $where[]="server = :srv"; $params[':srv']=$server==='PRODUCTION'?'PRODUCTION':'STAGING'; }
 if($project!==''){ $where[]="project = :prj"; $params[':prj']=$project; }
 if($status!==''){ $where[]="status = :st"; $params[':st']=$status; }
@@ -52,6 +51,7 @@ if($from!=='' && preg_match('/^\d{4}-\d{2}-\d{2}$/',$from)){ $where[]="created_a
 if($to!=='' && preg_match('/^\d{4}-\d{2}-\d{2}$/',$to)){ $where[]="created_at < :tod"; $params[':tod']=date('Y-m-d', strtotime($to.' +1 day')).' 00:00:00'; }
 $sqlWhere = $where?('WHERE '.implode(' AND ',$where)):'';
 
+// ===== Koneksi DB =====
 try{
   $pdo = new PDO($dsn,$dbUser,$dbPass,[
     PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,
@@ -65,7 +65,7 @@ try{
 // ===== CSV Export =====
 if($export==='csv'){
   $sql="SELECT id, nomor_form, dev_requestor, server, site, project, service, source_branch,
-               COALESCE(new_version, latest_version) AS new_version,
+               latest_version, new_version,
                status, created_at, updated_at
         FROM requests $sqlWhere ORDER BY $sort $dir LIMIT 100000";
   $st=$pdo->prepare($sql); $st->execute($params);
@@ -74,7 +74,7 @@ if($export==='csv'){
   $out=fopen('php://output','w');
   fputcsv($out,[
     'id','nomor_form','dev_requestor','server','site','project','service','source_branch',
-    'new_version','status','created_at','updated_at'
+    'latest_version','new_version','status','created_at','updated_at'
   ]);
   while($r=$st->fetch()){ fputcsv($out,$r); }
   fclose($out); exit;
@@ -85,7 +85,7 @@ $stc=$pdo->prepare("SELECT COUNT(*) FROM requests $sqlWhere"); $stc->execute($pa
 
 $offset=($page-1)*$perPage;
 $sql="SELECT id, nomor_form, dev_requestor, server, site, project, service, source_branch,
-             COALESCE(new_version, latest_version) AS new_version,
+             latest_version, new_version,
              status, created_at, updated_at
       FROM requests $sqlWhere ORDER BY $sort $dir LIMIT :lim OFFSET :off";
 $st=$pdo->prepare($sql);
@@ -95,6 +95,7 @@ $st->bindValue(':off',$offset,PDO::PARAM_INT);
 $st->execute();
 $rows=$st->fetchAll();
 
+// ===== Helper UI =====
 function url_with($over){
   $q=array_merge($_GET,$over);
   foreach($q as $k=>$v){ if($v===''||$v===null) unset($q[$k]); }
@@ -128,20 +129,19 @@ a{color:var(--accent2); text-decoration:none}
 .toolbar{display:grid; grid-template-columns:1fr auto; gap:12px; align-items:end}
 .filters{display:grid; grid-template-columns:repeat(8,1fr); gap:8px}
 label{font-size:12px; color:var(--muted)}
-input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid var(--line); background:#0b1328; color:var(--fg)}
-.btn{display:inline-block; padding:10px 14px; border-radius:10px; border:1px solid var(--line); background:#0b1328; color:var(--fg); cursor:pointer}
+input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid var(--line); background:#0b1328; color:#e5e7eb}
+.btn{display:inline-block; padding:10px 14px; border-radius:10px; border:1px solid var(--line); background:#0b1328; color:#e5e7eb; cursor:pointer}
 .btn.primary{background:linear-gradient(135deg,#2563eb,#10b981); border:none}
-.btn.ghost{background:transparent}
 
 /* TABLE */
 .table-wrap{ overflow:auto; border-radius:12px; }
 .table{width:100%; min-width:1600px; border-collapse:separate; border-spacing:0; margin-top:14px; table-layout:fixed;}
 .table th,.table td{padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; font-size:14px; white-space:nowrap;}
 .table th{font-weight:600; text-align:left; position:sticky; top:0; background:var(--card)}
-/* New Version kolom ke-6 boleh wrap */
+/* versi boleh wrap */
 .table td:nth-child(6), .table th:nth-child(6),
 .table td:nth-child(7), .table th:nth-child(7){ white-space:normal; }
-/* Nomor tiket boleh wrap */
+/* nomor tiket boleh wrap */
 .table td:nth-child(1), .table th:nth-child(1){ white-space:normal; word-break:break-all; }
 
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px}
@@ -209,13 +209,13 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
 
     <div class="table-wrap">
       <table class="table">
-<colgroup>
-  <col style="width:210px"><col style="width:100px">
-  <col style="width:130px"><col style="width:150px"><col style="width:140px">
-  <col style="width:220px"><!-- latest -->
-  <col style="width:220px"><!-- new -->
-  <col style="width:220px"><col style="width:100px"><col style="width:160px"><col style="width:160px">
-</colgroup>
+        <colgroup>
+          <col style="width:210px"><col style="width:100px">
+          <col style="width:130px"><col style="width:150px"><col style="width:140px">
+          <col style="width:220px"><!-- latest -->
+          <col style="width:220px"><!-- new -->
+          <col style="width:100px"><col style="width:160px"><col style="width:160px">
+        </colgroup>
 
         <thead>
           <tr>
@@ -229,38 +229,36 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
               th('Site','site',$sort,$dir);
               th('Project','project',$sort,$dir);
               th('Service','service',$sort,$dir);
-	      th('Latest Version','latest_version',$sort,$dir);
-              th('New Version','new_version',$sort,$dir); 
+              th('Latest Version','latest_version',$sort,$dir);
+              th('New Version','new_version',$sort,$dir);
               th('Status','status',$sort,$dir);
               th('Created','created_at',$sort,$dir);
               th('Updated','updated_at',$sort,$dir);
             ?>
           </tr>
         </thead>
+
         <tbody>
           <?php if(!$rows): ?>
-            <tr><td colspan="9" class="muted">Tidak ada data.</td></tr>
+            <tr><td colspan="10" class="muted">Tidak ada data.</td></tr>
           <?php else: foreach($rows as $r): ?>
             <tr>
               <td class="mono"><?=h($r['nomor_form'])?></td>
               <td class="mono"><?=h($r['server'])?></td>
               <td class="nowrap"><?=badge($r['site'],$r['site'])?></td>
 
-              <!-- Project -->
               <td class="mono"><?=h($r['project'])?></td>
-              <!-- Service -->
               <td class="nowrap"><span class="badge service"><?=h($r['service'])?></span></td>
-<td><?php
-  $lv = trim((string)$r['latest_version']);
-  echo $lv === '' ? '<span class="muted">—</span>' : '<code class="mono">'.h($lv).'</code>';
-?></td>
-              <!-- New Version -->
-              <td>
-                <?php
-                  $ver = trim((string)$r['new_version']);
-                  echo $ver === '' ? '<span class="muted">—</span>' : '<code class="mono">'.h($ver).'</code>';
-                ?>
-              </td>
+
+              <td><?php
+                $lv = trim((string)$r['latest_version']);
+                echo $lv === '' ? '<span class="muted">—</span>' : '<code class="mono">'.h($lv).'</code>';
+              ?></td>
+
+              <td><?php
+                $nv = trim((string)$r['new_version']);
+                echo $nv === '' ? '<span class="muted">—</span>' : '<code class="mono">'.h($nv).'</code>';
+              ?></td>
 
               <td class="nowrap"><?=badge($r['status'],$r['status'])?></td>
               <td class="mono nowrap"><?=h($r['created_at'])?></td>
@@ -351,3 +349,4 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
 </script>
 </body>
 </html>
+

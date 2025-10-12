@@ -20,7 +20,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE,
 $q        = trim($_GET['q'] ?? '');
 $server   = strtoupper(trim($_GET['server'] ?? ''));
 $project  = strtoupper(trim($_GET['project'] ?? ''));
-$status   = strtoupper(trim($_GET['status'] ?? ''));
+$status   = strtoupper(trim($_GET['status'] ?? '')); // tetap didukung via querystring, tapi tidak ditampilkan di UI
 $from     = trim($_GET['from'] ?? '');
 $to       = trim($_GET['to'] ?? '');
 $page     = max(1, (int)($_GET['page'] ?? 1));
@@ -29,7 +29,7 @@ $sort     = $_GET['sort'] ?? 'created_at';
 $dir      = strtolower($_GET['dir'] ?? 'desc') === 'asc' ? 'ASC' : 'DESC';
 $export   = $_GET['export'] ?? '';
 
-// kolom yang boleh disort (status DIHAPUS dari daftar sort)
+// kolom yang boleh disort (status dihapus dari daftar)
 $sortable = [
   'nomor_form','server','site','project','service',
   'latest_version','new_version',
@@ -47,7 +47,7 @@ if($q!==''){
 }
 if($server!==''){ $where[]="server = :srv"; $params[':srv']=$server==='PRODUCTION'?'PRODUCTION':'STAGING'; }
 if($project!==''){ $where[]="project = :prj"; $params[':prj']=$project; }
-if($status!==''){ $where[]="status = :st"; $params[':st']=$status; } // filter masih bisa dipakai
+if($status!==''){ $where[]="status = :st"; $params[':st']=$status; }
 if($from!=='' && preg_match('/^\d{4}-\d{2}-\d{2}$/',$from)){ $where[]="created_at >= :fromd"; $params[':fromd']=$from.' 00:00:00'; }
 if($to!=='' && preg_match('/^\d{4}-\d{2}-\d{2}$/',$to)){ $where[]="created_at < :tod"; $params[':tod']=date('Y-m-d', strtotime($to.' +1 day')).' 00:00:00'; }
 $sqlWhere = $where?('WHERE '.implode(' AND ',$where)):'';
@@ -63,7 +63,7 @@ try{
   echo '<pre>DB connect failed: '.h($e->getMessage()).'</pre>'; exit;
 }
 
-// ===== CSV Export (status DIHAPUS dari output) =====
+// ===== CSV Export (tanpa kolom status) =====
 if($export==='csv'){
   $sql="SELECT id, nomor_form, dev_requestor, server, site, project, service, source_branch,
                latest_version, new_version,
@@ -81,7 +81,7 @@ if($export==='csv'){
   fclose($out); exit;
 }
 
-// ===== Hitung total & ambil data halaman (status tidak di-select) =====
+// ===== Hitung total & ambil data halaman =====
 $stc=$pdo->prepare("SELECT COUNT(*) FROM requests $sqlWhere"); $stc->execute($params); $total=(int)$stc->fetchColumn();
 
 $offset=($page-1)*$perPage;
@@ -117,30 +117,35 @@ function badge($text,$type){
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>DevOps Requests Monitoring</title>
 <style>
-:root{ --bg:#0b1220; --fg:#e5e7eb; --muted:#9ca3af; --card:#0f172a; --line:#1f2937; --accent:#22c55e; --accent2:#3b82f6; }
+:root{
+  --bg:#0b1220; --fg:#e5e7eb; --muted:#9ca3af; --card:#0f172a; --line:#1f2937;
+  --accent:#22c55e; --accent2:#3b82f6;
+}
 *{box-sizing:border-box}
-body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu; background:var(--bg); color:#e5e7eb}
+body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu; background:var(--bg); color:var(--fg)}
 a{color:var(--accent2); text-decoration:none}
 .wrap{max-width:1680px; margin:24px auto; padding:0 24px}
 .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.25)}
 .toolbar{display:grid; grid-template-columns:1fr auto; gap:12px; align-items:end}
-.filters{display:grid; grid-template-columns:repeat(8,1fr); gap:8px}
+.filters{display:grid; grid-template-columns:repeat(7,1fr); gap:8px} /* 7 kolom filter (status dihapus) */
 label{font-size:12px; color:var(--muted)}
-input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid var(--line); background:#0b1328; color:#e5e7eb}
-.btn{display:inline-block; padding:10px 14px; border-radius:10px; border:1px solid var(--line); background:#0b1328; color:#e5e7eb; cursor:pointer}
+input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid var(--line); background:#0b1328; color:var(--fg)}
+.btn{display:inline-block; padding:10px 14px; border-radius:10px; border:1px solid var(--line); background:#0b1328; color:var(--fg); cursor:pointer}
 .btn.primary{background:linear-gradient(135deg,#2563eb,#10b981); border:none}
 
 /* TABLE */
 .table-wrap{ overflow:auto; border-radius:12px; }
-.table{width:100%; min-width:1600px; border-collapse:separate; border-spacing:0; margin-top:14px; table-layout:fixed;}
-.table th,.table td{padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; font-size:14px; white-space:nowrap;}
-.table th{font-weight:600; text-align:left; position:sticky; top:0; background:var(--card)}
-/* versi (kolom 6 & 7) boleh wrap */
-.table td:nth-child(6), .table th:nth-child(6),
-.table td:nth-child(7), .table th:nth-child(7){ white-space:normal; }
-/* nomor tiket boleh wrap */
-.table td:nth-child(1), .table th:nth-child(1){ white-space:normal; word-break:break-all; }
+.table{width:100%; min-width:1200px; border-collapse:separate; border-spacing:0; margin-top:14px; table-layout:fixed;}
+.table th,.table td{padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:middle; font-size:14px; white-space:nowrap;}
+.table th{font-weight:600; text-align:left; position:sticky; top:0; background:var(--card); z-index:1}
+.table tr:nth-child(even){background:rgba(255,255,255,.02)}
+.table tbody tr:hover{background:rgba(59,130,246,.07)}
 
+/* kolom yang boleh wrap/ellipsis */
+.cell-id{white-space:normal; word-break:break-all}
+.cell-ver{max-width:220px; overflow:hidden; text-overflow:ellipsis}
+.cell-ver code{background:#0b1328; border:1px solid var(--line); padding:2px 6px; border-radius:6px; display:inline-block}
+.text-center{text-align:center}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px}
 .nowrap{white-space:nowrap}
 .badge{padding:3px 8px; border-radius:999px; font-size:12px; color:#fff; display:inline-block}
@@ -149,7 +154,6 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
 .pager{display:flex; gap:8px; align-items:center; justify-content:flex-end; margin-top:10px}
 .num{padding:6px 10px; border-radius:8px; border:1px solid var(--line); background:#0b1328}
 .grid-2{display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center}
-.ellipsis{overflow:hidden; text-overflow:ellipsis}
 </style>
 </head>
 <body>
@@ -180,14 +184,7 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
             <?php endforeach; ?>
           </select>
         </div>
-        //<div><label>Status</label>
-          //<select name="status">
-            //<option value="">(All)</option>
-            //<?php foreach(['OPEN','ON PROCESS','DONE','CLOSED'] as $s): ?>
-              //  <option value="<?=$s?>" <?=$status===$s?'selected':''?>><?=$s?></option>
-           // <?php endforeach; ?>
-         // </select>
-       // </div>
+        <!-- Status filter sengaja disembunyikan dari UI -->
         <div><label>Dari Tanggal</label><input type="date" name="from" value="<?=h($from)?>"></div>
         <div><label>Sampai Tanggal</label><input type="date" name="to" value="<?=h($to)?>"></div>
         <div><label>Per Halaman</label>
@@ -207,10 +204,10 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
     <div class="table-wrap">
       <table class="table">
         <colgroup>
-          <col style="width:210px"><col style="width:100px">
-          <col style="width:130px"><col style="width:150px"><col style="width:140px">
-          <col style="width:220px"><!-- latest -->
-          <col style="width:220px"><!-- new -->
+          <col style="width:230px"><col style="width:110px">
+          <col style="width:90px"><col style="width:170px"><col style="width:180px">
+          <col style="width:230px"><!-- latest -->
+          <col style="width:230px"><!-- new -->
           <col style="width:160px"><col style="width:160px">
         </colgroup>
 
@@ -239,22 +236,18 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
             <tr><td colspan="9" class="muted">Tidak ada data.</td></tr>
           <?php else: foreach($rows as $r): ?>
             <tr>
-              <td class="mono"><?=h($r['nomor_form'])?></td>
-              <td class="mono"><?=h($r['server'])?></td>
-              <td class="nowrap"><?=badge($r['site'],$r['site'])?></td>
-
+              <td class="mono cell-id"><?=h($r['nomor_form'])?></td>
+              <td class="mono text-center"><?=h($r['server'])?></td>
+              <td class="text-center"><span class="badge"><?=h($r['site'])?></span></td>
               <td class="mono"><?=h($r['project'])?></td>
-              <td class="nowrap"><span class="badge service"><?=h($r['service'])?></span></td>
+              <td class="text-center"><span class="badge service"><?=h($r['service'])?></span></td>
 
-              <td><?php
+              <?php
                 $lv = trim((string)$r['latest_version']);
-                echo $lv === '' ? '<span class="muted">—</span>' : '<code class="mono">'.h($lv).'</code>';
-              ?></td>
-
-              <td><?php
                 $nv = trim((string)$r['new_version']);
-                echo $nv === '' ? '<span class="muted">—</span>' : '<code class="mono">'.h($nv).'</code>';
-              ?></td>
+              ?>
+              <td class="cell-ver"><?= $lv === '' ? '<span class="muted">—</span>' : '<span class="cell-ver" title="'.h($lv).'"><code class="mono">'.h($lv).'</code></span>' ?></td>
+              <td class="cell-ver"><?= $nv === '' ? '<span class="muted">—</span>' : '<span class="cell-ver" title="'.h($nv).'"><code class="mono">'.h($nv).'</code></span>' ?></td>
 
               <td class="mono nowrap"><?=h($r['created_at'])?></td>
               <td class="mono nowrap"><?=h($r['updated_at'])?></td>
@@ -319,18 +312,7 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
     }
   }
 
-  // SSE + auto-reconnect
-  let es = null;
-  function startSSE() {
-    try {
-      es = new EventSource('sse.php');
-      es.addEventListener('refresh', () => { softRefresh(); });
-      es.onerror = () => { try { es.close(); } catch {}; es = null; setTimeout(startSSE, 5000); };
-    } catch (e) {}
-  }
-  if ('EventSource' in window) startSSE();
-
-  // Polling cadangan
+  // Polling cadangan (fallback)
   setInterval(() => {
     if (document.hidden) return;
     if (Date.now() - lastSwapAt < 3000) return;

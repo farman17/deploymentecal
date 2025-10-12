@@ -139,7 +139,8 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
 .table th,.table td{padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; font-size:14px; white-space:nowrap;}
 .table th{font-weight:600; text-align:left; position:sticky; top:0; background:var(--card)}
 /* New Version kolom ke-6 boleh wrap */
-.table td:nth-child(6), .table th:nth-child(6){ white-space:normal; }
+.table td:nth-child(6), .table th:nth-child(6),
+.table td:nth-child(7), .table th:nth-child(7){ white-space:normal; }
 /* Nomor tiket boleh wrap */
 .table td:nth-child(1), .table th:nth-child(1){ white-space:normal; word-break:break-all; }
 
@@ -211,6 +212,8 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
 <colgroup>
   <col style="width:210px"><col style="width:100px">
   <col style="width:130px"><col style="width:150px"><col style="width:140px">
+  <col style="width:220px"><!-- latest -->
+  <col style="width:220px"><!-- new -->
   <col style="width:220px"><col style="width:100px"><col style="width:160px"><col style="width:160px">
 </colgroup>
 
@@ -226,7 +229,8 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
               th('Site','site',$sort,$dir);
               th('Project','project',$sort,$dir);
               th('Service','service',$sort,$dir);
-              th('New Version','new_version',$sort,$dir); // ganti dari Changelog
+	      th('Latest Version','latest_version',$sort,$dir);
+              th('New Version','new_version',$sort,$dir); 
               th('Status','status',$sort,$dir);
               th('Created','created_at',$sort,$dir);
               th('Updated','updated_at',$sort,$dir);
@@ -246,7 +250,10 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
               <td class="mono"><?=h($r['project'])?></td>
               <!-- Service -->
               <td class="nowrap"><span class="badge service"><?=h($r['service'])?></span></td>
-
+<td><?php
+  $lv = trim((string)$r['latest_version']);
+  echo $lv === '' ? '<span class="muted">—</span>' : '<code class="mono">'.h($lv).'</code>';
+?></td>
               <!-- New Version -->
               <td>
                 <?php

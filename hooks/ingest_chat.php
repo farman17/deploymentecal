@@ -2,8 +2,19 @@
 // deployweb/hooks/ingest_chat.php
 const INGEST_TOKEN = '4f9a7c2e1e9c4f6f2d5b1a9c0e7d3a12b6c9f1e4d7a8b2c3d4e5f6a7b8c9d0e1';
 
-$dsn='mysql:host=localhost;dbname=deployweb;charset=utf8mb4';
-$dbUser='root'; $dbPass='';
+// ==== DB config via ENV (fallback ke nilai compose/run) ====      
+$DB_HOST = getenv('DB_HOST') ?: 'db';
+$DB_PORT = getenv('DB_PORT') ?: '3306';
+$DB_NAME = getenv('DB_NAME') ?: 'deployweb';
+$DB_USER = getenv('DB_USER') ?: 'deployuser';
+$DB_PASS = getenv('DB_PASS') ?: 'secret';
+
+$dsn    = "mysql:host={$DB_HOST};port={$DB_PORT};dbname={$DB_NAME};charset=utf8mb4";
+$dbUser = $DB_USER;
+$dbPass = $DB_PASS;
+
+//$dsn='mysql:host=localhost;dbname=deployweb;charset=utf8mb4';
+//$dbUser='root'; $dbPass='';
 
 function jerr($msg,$code=400,$extra=[]){
   http_response_code($code);

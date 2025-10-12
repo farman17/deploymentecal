@@ -1,9 +1,5 @@
 <?php
 // requests.php — UI ringan untuk melihat tabel requests
-//$dsn    = 'mysql:host=localhost;dbname=deployweb;charset=utf8mb4';
-//$dbUser = 'root';
-//$dbPass = '';
-
 
 // ==== DB config via ENV (fallback ke nilai compose/run) ====
 $DB_HOST = getenv('DB_HOST') ?: 'db';
@@ -15,8 +11,6 @@ $DB_PASS = getenv('DB_PASS') ?: 'secret';
 $dsn    = "mysql:host={$DB_HOST};port={$DB_PORT};dbname={$DB_NAME};charset=utf8mb4";
 $dbUser = $DB_USER;
 $dbPass = $DB_PASS;
-
-
 
 date_default_timezone_set('Asia/Jakarta');
 
@@ -34,14 +28,23 @@ $sort     = $_GET['sort'] ?? 'created_at';
 $dir      = strtolower($_GET['dir'] ?? 'desc') === 'asc' ? 'ASC' : 'DESC';
 $export   = $_GET['export'] ?? '';
 
+// kolom yang boleh disort
 $sortable = [
-  'nomor_form','server','site','project',
-  'service','status','created_at','updated_at'
+  'nomor_form','server','site','project','service',
+  'new_version', // <— TAMBAHAN: izinkan sort by New Version
+  'status','created_at','updated_at'
 ];
 if(!in_array($sort, $sortable, true)) $sort = 'created_at';
 
+// ===== Filter & pencarian =====
 $where=[];$params=[];
-if($q!==''){ $where[]="(nomor_form LIKE :kw OR dev_requestor LIKE :kw OR site LIKE :kw OR project LIKE :kw OR service LIKE :kw OR source_branch LIKE :kw OR changelog LIKE :kw)"; $params[':kw']="%$q%"; }
+if($q!==''){
+  // cari juga di version
+  $where[]="(nomor_form LIKE :kw OR dev_requestor LIKE :kw OR site LIKE :kw OR project LIKE :kw
+             OR service LIKE :kw OR source_branch LIKE :kw
+             OR COALESCE(new_version, latest_version) LIKE :kw)";
+  $params[':kw']="%$q%";
+}
 if($server!==''){ $where[]="server = :srv"; $params[':srv']=$server==='PRODUCTION'?'PRODUCTION':'STAGING'; }
 if($project!==''){ $where[]="project = :prj"; $params[':prj']=$project; }
 if($status!==''){ $where[]="status = :st"; $params[':st']=$status; }
@@ -50,25 +53,40 @@ if($to!=='' && preg_match('/^\d{4}-\d{2}-\d{2}$/',$to)){ $where[]="created_at < 
 $sqlWhere = $where?('WHERE '.implode(' AND ',$where)):'';
 
 try{
-  $pdo = new PDO($dsn,$dbUser,$dbPass,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC]);
-}catch(Throwable $e){ http_response_code(500); echo '<pre>DB connect failed: '.h($e->getMessage()).'</pre>'; exit; }
+  $pdo = new PDO($dsn,$dbUser,$dbPass,[
+    PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC
+  ]);
+}catch(Throwable $e){
+  http_response_code(500);
+  echo '<pre>DB connect failed: '.h($e->getMessage()).'</pre>'; exit;
+}
 
+// ===== CSV Export =====
 if($export==='csv'){
-  $sql="SELECT id, nomor_form, dev_requestor, server, site, project, service, source_branch, changelog, status, created_at, updated_at
+  $sql="SELECT id, nomor_form, dev_requestor, server, site, project, service, source_branch,
+               COALESCE(new_version, latest_version) AS new_version,
+               status, created_at, updated_at
         FROM requests $sqlWhere ORDER BY $sort $dir LIMIT 100000";
   $st=$pdo->prepare($sql); $st->execute($params);
   header('Content-Type: text/csv; charset=utf-8');
   header('Content-Disposition: attachment; filename="requests_'.date('Ymd_His').'.csv"');
   $out=fopen('php://output','w');
-  fputcsv($out,['id','nomor_form','dev_requestor','server','site','project','service','source_branch','changelog','status','created_at','updated_at']);
+  fputcsv($out,[
+    'id','nomor_form','dev_requestor','server','site','project','service','source_branch',
+    'new_version','status','created_at','updated_at'
+  ]);
   while($r=$st->fetch()){ fputcsv($out,$r); }
   fclose($out); exit;
 }
 
+// ===== Hitung total & ambil data halaman =====
 $stc=$pdo->prepare("SELECT COUNT(*) FROM requests $sqlWhere"); $stc->execute($params); $total=(int)$stc->fetchColumn();
 
 $offset=($page-1)*$perPage;
-$sql="SELECT id, nomor_form, dev_requestor, server, site, project, service, source_branch, changelog, status, created_at, updated_at
+$sql="SELECT id, nomor_form, dev_requestor, server, site, project, service, source_branch,
+             COALESCE(new_version, latest_version) AS new_version,
+             status, created_at, updated_at
       FROM requests $sqlWhere ORDER BY $sort $dir LIMIT :lim OFFSET :off";
 $st=$pdo->prepare($sql);
 foreach($params as $k=>$v){ $st->bindValue($k,$v); }
@@ -77,14 +95,18 @@ $st->bindValue(':off',$offset,PDO::PARAM_INT);
 $st->execute();
 $rows=$st->fetchAll();
 
-function url_with($over){ $q=array_merge($_GET,$over); foreach($q as $k=>$v){ if($v===''||$v===null) unset($q[$k]); } return '?'.http_build_query($q); }
+function url_with($over){
+  $q=array_merge($_GET,$over);
+  foreach($q as $k=>$v){ if($v===''||$v===null) unset($q[$k]); }
+  return '?'.http_build_query($q);
+}
 function badge($text,$type){
   $colors = [
     'STAGING'     => '#6366f1',
-    'PRODUCTION'  => '#966b9cff', // mustard (sudah kamu minta)
+    'PRODUCTION'  => '#966b9cff',
     'OPEN'        => '#22c55e',
-    'ON PROCESS'  => '#f59e0b', // oranye/amber untuk in-progress
-    'DONE'        => '#03312aff', // hijau sukses
+    'ON PROCESS'  => '#f59e0b',
+    'DONE'        => '#03312aff',
     'CLOSED'      => '#6b7280',
   ];
   $bg = $colors[$text] ?? '#0ea5e9';
@@ -116,7 +138,7 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
 .table{width:100%; min-width:1600px; border-collapse:separate; border-spacing:0; margin-top:14px; table-layout:fixed;}
 .table th,.table td{padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; font-size:14px; white-space:nowrap;}
 .table th{font-weight:600; text-align:left; position:sticky; top:0; background:var(--card)}
-/* Changelog kolom ke-7 (setelah sembunyikan Branch) boleh wrap */
+/* New Version kolom ke-6 boleh wrap */
 .table td:nth-child(6), .table th:nth-child(6){ white-space:normal; }
 /* Nomor tiket boleh wrap */
 .table td:nth-child(1), .table th:nth-child(1){ white-space:normal; word-break:break-all; }
@@ -124,12 +146,12 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px}
 .nowrap{white-space:nowrap}
 .badge{padding:3px 8px; border-radius:999px; font-size:12px; color:#fff; display:inline-block}
-/* NEW: style untuk Service */
-.badge.service{ background:#454545; } /* biru-cyan */
+.badge.service{ background:#454545; }
 .muted{color:var(--muted)}
 .pager{display:flex; gap:8px; align-items:center; justify-content:flex-end; margin-top:10px}
 .num{padding:6px 10px; border-radius:8px; border:1px solid var(--line); background:#0b1328}
 .grid-2{display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center}
+.ellipsis{overflow:hidden; text-overflow:ellipsis}
 </style>
 </head>
 <body>
@@ -142,7 +164,9 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
   <div class="card">
     <form method="get" class="toolbar">
       <div class="filters">
-        <div><label>Search</label><input type="text" name="q" value="<?=h($q)?>" placeholder="nomor, service, changelog..."></div>
+        <div><label>Search</label>
+          <input type="text" name="q" value="<?=h($q)?>" placeholder="nomor, service, version...">
+        </div>
         <div><label>Server</label>
           <select name="server">
             <option value="">(All)</option>
@@ -187,7 +211,7 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
 <colgroup>
   <col style="width:210px"><col style="width:100px">
   <col style="width:130px"><col style="width:150px"><col style="width:140px">
-  <col style="width:420px"><col style="width:100px"><col style="width:160px"><col style="width:160px">
+  <col style="width:220px"><col style="width:100px"><col style="width:160px"><col style="width:160px">
 </colgroup>
 
         <thead>
@@ -202,7 +226,7 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
               th('Site','site',$sort,$dir);
               th('Project','project',$sort,$dir);
               th('Service','service',$sort,$dir);
-              th('Changelog','changelog',$sort,$dir);
+              th('New Version','new_version',$sort,$dir); // ganti dari Changelog
               th('Status','status',$sort,$dir);
               th('Created','created_at',$sort,$dir);
               th('Updated','updated_at',$sort,$dir);
@@ -211,31 +235,26 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
         </thead>
         <tbody>
           <?php if(!$rows): ?>
-            <tr><td colspan="10" class="muted">Tidak ada data.</td></tr>
+            <tr><td colspan="9" class="muted">Tidak ada data.</td></tr>
           <?php else: foreach($rows as $r): ?>
             <tr>
               <td class="mono"><?=h($r['nomor_form'])?></td>
-<td class="mono"><?=h($r['server'])?></td>
-<td class="nowrap"><?=badge($r['site'],$r['site'])?></td>
+              <td class="mono"><?=h($r['server'])?></td>
+              <td class="nowrap"><?=badge($r['site'],$r['site'])?></td>
 
-              <!-- Project: hapus style (plain text) -->
+              <!-- Project -->
               <td class="mono"><?=h($r['project'])?></td>
-              <!-- Service: pakai badge -->
+              <!-- Service -->
               <td class="nowrap"><span class="badge service"><?=h($r['service'])?></span></td>
+
+              <!-- New Version -->
               <td>
                 <?php
-                  $cl = trim((string)$r['changelog']);
-                  if ($cl === '') { echo '<span class="muted">—</span>'; }
-                  else {
-                    $short = mb_strimwidth($cl, 0, 120, '…', 'UTF-8');
-                    if ($short !== $cl) {
-                      echo '<details><summary class="ellipsis">'.h($short).'</summary><pre class="mono" style="white-space:pre-wrap;margin:8px 0 0">'.h($cl).'</pre></details>';
-                    } else {
-                      echo '<div class="ellipsis" title="'.h($cl).'">'.h($cl).'</div>';
-                    }
-                  }
+                  $ver = trim((string)$r['new_version']);
+                  echo $ver === '' ? '<span class="muted">—</span>' : '<code class="mono">'.h($ver).'</code>';
                 ?>
               </td>
+
               <td class="nowrap"><?=badge($r['status'],$r['status'])?></td>
               <td class="mono nowrap"><?=h($r['created_at'])?></td>
               <td class="mono nowrap"><?=h($r['updated_at'])?></td>
@@ -258,8 +277,8 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
     </div>
   </div>
 </div>
+
 <style>
-/* highlight baris yang baru */
 @keyframes flashRow { 0%{background:rgba(34,197,94,.18)} 100%{background:transparent} }
 .tr-new { animation: flashRow 1.2s ease-out; }
 </style>
@@ -284,7 +303,6 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
       const oldPager = document.querySelector('.pager');
       if (!newTbody || !oldTbody) return;
 
-      // optional highlight baris baru berdasar nomor tiket
       const oldKeys = new Set([...oldTbody.querySelectorAll('tr')].map(tr => (tr.cells[0]?.textContent || '').trim()));
       oldTbody.replaceWith(newTbody);
       newTbody.querySelectorAll('tr').forEach(tr => {
@@ -295,48 +313,34 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
       if (newPager && oldPager) oldPager.replaceWith(newPager);
       lastSwapAt = Date.now();
     } catch (e) {
-      // diamkan saja
+      // diamkan
     } finally {
       isSwapping = false;
     }
   }
 
-  // ---- SSE + auto-reconnect ----
+  // SSE + auto-reconnect
   let es = null;
   function startSSE() {
     try {
       es = new EventSource('sse.php');
       es.addEventListener('refresh', () => { softRefresh(); });
-      es.onerror = () => {
-        // putus? tutup & coba lagi nanti
-        try { es.close(); } catch {}
-        es = null;
-        // biarkan polling yang ambil alih sementara
-        setTimeout(startSSE, 5000);
-      };
-    } catch (e) {
-      // gagal buat EventSource → biar polling saja
-    }
+      es.onerror = () => { try { es.close(); } catch {}; es = null; setTimeout(startSSE, 5000); };
+    } catch (e) {}
   }
   if ('EventSource' in window) startSSE();
 
-  // ---- Polling cadangan SELALU jalan (hemat saat tab tidak aktif) ----
+  // Polling cadangan
   setInterval(() => {
     if (document.hidden) return;
-    // Jika sudah disegarkan <3s lalu oleh SSE, lewati
     if (Date.now() - lastSwapAt < 3000) return;
     softRefresh();
   }, 5000);
 
-  // Saat tab kembali fokus, refresh sekali
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) softRefresh();
   });
 })();
 </script>
-
-
-
-
 </body>
 </html>

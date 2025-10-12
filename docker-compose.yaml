@@ -5,7 +5,7 @@ services:
     environment:
       TZ: Asia/Jakarta
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASS:-changeme}
-      MARIADB_DATABASE: ${DB_NAME:-deployweb}
+      MARIADB_DATABASE: ${DB_NAME:-deploymentecal}
       MARIADB_USER: ${DB_USER:-deployuser}
       MARIADB_PASSWORD: ${DB_PASS:-secret}
     volumes:
@@ -17,7 +17,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    networks: [deployweb-net]
+    networks: [deployweb-netku]
 
   php:
     build: .
@@ -26,7 +26,7 @@ services:
       TZ: Asia/Jakarta
       DB_HOST: db          # host DB = nama service db
       DB_PORT: "3306"
-      DB_NAME: ${DB_NAME:-deployweb}
+      DB_NAME: ${DB_NAME:-deploymentecal}
       DB_USER: ${DB_USER:-deployuser}
       DB_PASS: ${DB_PASS:-secret}
     volumes:
@@ -37,7 +37,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    networks: [deployweb-net]
+    networks: [deployweb-netku]
 
   # OPSIONAL: phpMyAdmin untuk intip DB via browser (http://<IP>:8083)
   phpmyadmin:
@@ -54,10 +54,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    networks: [deployweb-net]
+    networks: [deployweb-netku]
 
 volumes:
   mysql_deployweb:
 
 networks:
-  deployweb-net:
+  deployweb-netku:

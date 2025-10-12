@@ -13,6 +13,7 @@ $dbUser = $DB_USER;
 $dbPass = $DB_PASS;
 
 date_default_timezone_set('Asia/Jakarta');
+
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
 
 // ===== Input & default =====
@@ -28,11 +29,11 @@ $sort     = $_GET['sort'] ?? 'created_at';
 $dir      = strtolower($_GET['dir'] ?? 'desc') === 'asc' ? 'ASC' : 'DESC';
 $export   = $_GET['export'] ?? '';
 
-// kolom yang boleh disort
+// kolom yang boleh disort (status DIHAPUS dari daftar sort)
 $sortable = [
   'nomor_form','server','site','project','service',
   'latest_version','new_version',
-  'status','created_at','updated_at'
+  'created_at','updated_at'
 ];
 if(!in_array($sort, $sortable, true)) $sort = 'created_at';
 
@@ -41,12 +42,12 @@ $where=[];$params=[];
 if($q!==''){
   $where[]="(nomor_form LIKE :kw OR dev_requestor LIKE :kw OR site LIKE :kw OR project LIKE :kw
              OR service LIKE :kw OR source_branch LIKE :kw
-             OR COALESCE(new_version, latest_version) LIKE :kw)";
+             OR latest_version LIKE :kw OR new_version LIKE :kw)";
   $params[':kw']="%$q%";
 }
 if($server!==''){ $where[]="server = :srv"; $params[':srv']=$server==='PRODUCTION'?'PRODUCTION':'STAGING'; }
 if($project!==''){ $where[]="project = :prj"; $params[':prj']=$project; }
-if($status!==''){ $where[]="status = :st"; $params[':st']=$status; }
+if($status!==''){ $where[]="status = :st"; $params[':st']=$status; } // filter masih bisa dipakai
 if($from!=='' && preg_match('/^\d{4}-\d{2}-\d{2}$/',$from)){ $where[]="created_at >= :fromd"; $params[':fromd']=$from.' 00:00:00'; }
 if($to!=='' && preg_match('/^\d{4}-\d{2}-\d{2}$/',$to)){ $where[]="created_at < :tod"; $params[':tod']=date('Y-m-d', strtotime($to.' +1 day')).' 00:00:00'; }
 $sqlWhere = $where?('WHERE '.implode(' AND ',$where)):'';
@@ -62,31 +63,31 @@ try{
   echo '<pre>DB connect failed: '.h($e->getMessage()).'</pre>'; exit;
 }
 
-// ===== CSV Export =====
+// ===== CSV Export (status DIHAPUS dari output) =====
 if($export==='csv'){
   $sql="SELECT id, nomor_form, dev_requestor, server, site, project, service, source_branch,
                latest_version, new_version,
-               status, created_at, updated_at
+               created_at, updated_at
         FROM requests $sqlWhere ORDER BY $sort $dir LIMIT 100000";
   $st=$pdo->prepare($sql); $st->execute($params);
   header('Content-Type: text/csv; charset=utf-8');
-  header('Content-Disposition: attachment; filename="requests_'.date('Ymd_His').'.csv"');
+  header('Content-Disposition: attachment; filename=\"requests_'.date('Ymd_His').'.csv\"');
   $out=fopen('php://output','w');
   fputcsv($out,[
     'id','nomor_form','dev_requestor','server','site','project','service','source_branch',
-    'latest_version','new_version','status','created_at','updated_at'
+    'latest_version','new_version','created_at','updated_at'
   ]);
   while($r=$st->fetch()){ fputcsv($out,$r); }
   fclose($out); exit;
 }
 
-// ===== Hitung total & ambil data halaman =====
+// ===== Hitung total & ambil data halaman (status tidak di-select) =====
 $stc=$pdo->prepare("SELECT COUNT(*) FROM requests $sqlWhere"); $stc->execute($params); $total=(int)$stc->fetchColumn();
 
 $offset=($page-1)*$perPage;
 $sql="SELECT id, nomor_form, dev_requestor, server, site, project, service, source_branch,
              latest_version, new_version,
-             status, created_at, updated_at
+             created_at, updated_at
       FROM requests $sqlWhere ORDER BY $sort $dir LIMIT :lim OFFSET :off";
 $st=$pdo->prepare($sql);
 foreach($params as $k=>$v){ $st->bindValue($k,$v); }
@@ -105,10 +106,6 @@ function badge($text,$type){
   $colors = [
     'STAGING'     => '#6366f1',
     'PRODUCTION'  => '#966b9cff',
-    'OPEN'        => '#22c55e',
-    'ON PROCESS'  => '#f59e0b',
-    'DONE'        => '#03312aff',
-    'CLOSED'      => '#6b7280',
   ];
   $bg = $colors[$text] ?? '#0ea5e9';
   return '<span class="badge" style="background:'.$bg.'">'.h($text).'</span>';
@@ -122,7 +119,7 @@ function badge($text,$type){
 <style>
 :root{ --bg:#0b1220; --fg:#e5e7eb; --muted:#9ca3af; --card:#0f172a; --line:#1f2937; --accent:#22c55e; --accent2:#3b82f6; }
 *{box-sizing:border-box}
-body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu; background:var(--bg); color:var(--fg)}
+body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu; background:var(--bg); color:#e5e7eb}
 a{color:var(--accent2); text-decoration:none}
 .wrap{max-width:1680px; margin:24px auto; padding:0 24px}
 .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.25)}
@@ -138,7 +135,7 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
 .table{width:100%; min-width:1600px; border-collapse:separate; border-spacing:0; margin-top:14px; table-layout:fixed;}
 .table th,.table td{padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; font-size:14px; white-space:nowrap;}
 .table th{font-weight:600; text-align:left; position:sticky; top:0; background:var(--card)}
-/* versi boleh wrap */
+/* versi (kolom 6 & 7) boleh wrap */
 .table td:nth-child(6), .table th:nth-child(6),
 .table td:nth-child(7), .table th:nth-child(7){ white-space:normal; }
 /* nomor tiket boleh wrap */
@@ -214,7 +211,7 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
           <col style="width:130px"><col style="width:150px"><col style="width:140px">
           <col style="width:220px"><!-- latest -->
           <col style="width:220px"><!-- new -->
-          <col style="width:100px"><col style="width:160px"><col style="width:160px">
+          <col style="width:160px"><col style="width:160px">
         </colgroup>
 
         <thead>
@@ -231,7 +228,6 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
               th('Service','service',$sort,$dir);
               th('Latest Version','latest_version',$sort,$dir);
               th('New Version','new_version',$sort,$dir);
-              th('Status','status',$sort,$dir);
               th('Created','created_at',$sort,$dir);
               th('Updated','updated_at',$sort,$dir);
             ?>
@@ -240,7 +236,7 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
 
         <tbody>
           <?php if(!$rows): ?>
-            <tr><td colspan="10" class="muted">Tidak ada data.</td></tr>
+            <tr><td colspan="9" class="muted">Tidak ada data.</td></tr>
           <?php else: foreach($rows as $r): ?>
             <tr>
               <td class="mono"><?=h($r['nomor_form'])?></td>
@@ -260,7 +256,6 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
                 echo $nv === '' ? '<span class="muted">—</span>' : '<code class="mono">'.h($nv).'</code>';
               ?></td>
 
-              <td class="nowrap"><?=badge($r['status'],$r['status'])?></td>
               <td class="mono nowrap"><?=h($r['created_at'])?></td>
               <td class="mono nowrap"><?=h($r['updated_at'])?></td>
             </tr>

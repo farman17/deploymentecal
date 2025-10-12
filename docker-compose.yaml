@@ -1,0 +1,63 @@
+services:
+  db:
+    image: mariadb:10.6
+    container_name: deployweb-mysqlku
+    environment:
+      TZ: Asia/Jakarta
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASS:-changeme}
+      MARIADB_DATABASE: ${DB_NAME:-deployweb}
+      MARIADB_USER: ${DB_USER:-deployuser}
+      MARIADB_PASSWORD: ${DB_PASS:-secret}
+    volumes:
+      - mysql_deployweb:/var/lib/mysql
+      # otomatis import saat pertama kali (hapus baris ini kalau tidak perlu)
+      - ./requests.sql:/docker-entrypoint-initdb.d/01_requests.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -uroot -p$${MARIADB_ROOT_PASSWORD} --silent || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [deployweb-net]
+
+  php:
+    build: .
+    container_name: deployweb-php
+    environment:
+      TZ: Asia/Jakarta
+      DB_HOST: db          # host DB = nama service db
+      DB_PORT: "3306"
+      DB_NAME: ${DB_NAME:-deployweb}
+      DB_USER: ${DB_USER:-deployuser}
+      DB_PASS: ${DB_PASS:-secret}
+    volumes:
+      - ./:/var/www/html   # jalankan dari root proyek
+    command: ["php", "-S", "0.0.0.0:8080", "-t", "/var/www/html"]
+    ports:
+      - "8084:8080"        # app di http://<IP>:8081/requests.php
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [deployweb-net]
+
+  # OPSIONAL: phpMyAdmin untuk intip DB via browser (http://<IP>:8083)
+  phpmyadmin:
+    image: phpmyadmin:5-apache
+    container_name: deployweb-pma
+    environment:
+      TZ: Asia/Jakarta
+      PMA_HOST: db
+      PMA_USER: ${DB_USER:-deployuser}
+      PMA_PASSWORD: ${DB_PASS:-secret}
+      UPLOAD_LIMIT: 64M
+    ports:
+      - "8083:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [deployweb-net]
+
+volumes:
+  mysql_deployweb:
+
+networks:
+  deployweb-net:

@@ -1,5 +1,5 @@
 <?php
-// requests.php — UI ringan untuk melihat tabel requests
+/* requests.php — UI ringan monitoring deploy (kolom rapi + align) */
 
 $DB_HOST = getenv('DB_HOST') ?: 'db';
 $DB_PORT = getenv('DB_PORT') ?: '3306';
@@ -11,19 +11,19 @@ $dsn = "mysql:host={$DB_HOST};port={$DB_PORT};dbname={$DB_NAME};charset=utf8mb4"
 date_default_timezone_set('Asia/Jakarta');
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES|ENT_SUBSTITUTE, 'UTF-8'); }
 
-$q = trim($_GET['q'] ?? '');
-$server = strtoupper(trim($_GET['server'] ?? ''));
+$q       = trim($_GET['q'] ?? '');
+$server  = strtoupper(trim($_GET['server'] ?? ''));
 $project = strtoupper(trim($_GET['project'] ?? ''));
-$status = strtoupper(trim($_GET['status'] ?? '')); // tetap didukung via querystring
-$from = trim($_GET['from'] ?? '');
-$to   = trim($_GET['to'] ?? '');
-$page = max(1, (int)($_GET['page'] ?? 1));
+$status  = strtoupper(trim($_GET['status'] ?? ''));
+$from    = trim($_GET['from'] ?? '');
+$to      = trim($_GET['to'] ?? '');
+$page    = max(1, (int)($_GET['page'] ?? 1));
 $perPage = min(max((int)($_GET['pp'] ?? 20), 5), 200);
-$sort = $_GET['sort'] ?? 'created_at';
-$dir  = strtolower($_GET['dir'] ?? 'desc') === 'asc' ? 'ASC' : 'DESC';
-$export = $_GET['export'] ?? '';
+$sort    = $_GET['sort'] ?? 'created_at';
+$dir     = strtolower($_GET['dir'] ?? 'desc') === 'asc' ? 'ASC' : 'DESC';
+$export  = $_GET['export'] ?? '';
 
-$sortable = ['nomor_form','server','site','project','service','latest_version','new_version','created_at','updated_at'];
+$sortable = ['server','site','project','service','latest_version','new_version','created_at','updated_at','nomor_form'];
 if(!in_array($sort, $sortable, true)) $sort = 'created_at';
 
 $where=[]; $params=[];
@@ -32,7 +32,7 @@ if($q!==''){
              OR service LIKE :kw OR source_branch LIKE :kw OR latest_version LIKE :kw OR new_version LIKE :kw)";
   $params[':kw']="%$q%";
 }
-if($server!==''){ $where[]="server = :srv"; $params[':srv']=$server==='PRODUCTION'?'PRODUCTION':'STAGING'; }
+if($server!==''){ $where[]="server = :srv"; $params[':srv']=$server; }
 if($project!==''){ $where[]="project = :prj"; $params[':prj']=$project; }
 if($status!==''){ $where[]="status = :st"; $params[':st']=$status; }
 if($from!=='' && preg_match('/^\d{4}-\d{2}-\d{2}$/',$from)){ $where[]="created_at >= :fromd"; $params[':fromd']=$from.' 00:00:00'; }
@@ -47,22 +47,20 @@ try{
 }catch(Throwable $e){ http_response_code(500); echo '<pre>DB connect failed: '.h($e->getMessage()).'</pre>'; exit; }
 
 if($export==='csv'){
-  $sql="SELECT id, nomor_form, dev_requestor, server, site, project, service, source_branch,
-               latest_version, new_version, created_at, updated_at
+  $sql="SELECT server,site,project,service,latest_version,new_version,created_at,updated_at
         FROM requests $sqlWhere ORDER BY $sort $dir LIMIT 100000";
   $st=$pdo->prepare($sql); $st->execute($params);
   header('Content-Type: text/csv; charset=utf-8');
   header('Content-Disposition: attachment; filename="requests_'.date('Ymd_His').'.csv"');
   $out=fopen('php://output','w');
-  fputcsv($out,['id','nomor_form','dev_requestor','server','site','project','service','source_branch','latest_version','new_version','created_at','updated_at']);
+  fputcsv($out,['server','site','project','service','latest_version','new_version','created_at','updated_at']);
   while($r=$st->fetch()){ fputcsv($out,$r); }
   fclose($out); exit;
 }
 
 $stc=$pdo->prepare("SELECT COUNT(*) FROM requests $sqlWhere"); $stc->execute($params); $total=(int)$stc->fetchColumn();
 $offset=($page-1)*$perPage;
-$sql="SELECT id, nomor_form, dev_requestor, server, site, project, service, source_branch,
-             latest_version, new_version, created_at, updated_at
+$sql="SELECT server, site, project, service, latest_version, new_version, created_at
       FROM requests $sqlWhere ORDER BY $sort $dir LIMIT :lim OFFSET :off";
 $st=$pdo->prepare($sql);
 foreach($params as $k=>$v){ $st->bindValue($k,$v); }
@@ -100,27 +98,55 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
 .btn.primary{background:linear-gradient(135deg,#2563eb,#10b981); border:none}
 
 /* TABLE */
-.table-wrap{overflow:auto; border-radius:12px; margin-bottom:14px;}
-.table{width:100%; border-collapse:collapse; table-layout:fixed; margin-top:14px;}
-.table th,.table td{padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:middle; font-size:14px; white-space:nowrap;}
-.table th{font-weight:600; position:sticky; top:0; background:var(--card); z-index:1;}
-.table thead th a{display:block;} /* pastikan text header center tepat */
-.table tr:nth-child(even){background:rgba(255,255,255,.02)}
+.table-wrap{overflow:auto; border-radius:12px; margin-top:14px;}
+.table{
+  width:100%;
+  min-width:1280px;              /* cegah gepeng */
+  border-collapse:separate;
+  border-spacing:0;
+  table-layout:fixed;            /* patok colgroup */
+}
+.table th,.table td{
+  padding:10px 12px;
+  border-bottom:1px solid var(--line);
+  vertical-align:middle;
+  font-size:14px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.table thead th{
+  font-weight:600;
+  position:sticky; top:0; z-index:1;
+  background:var(--card);
+}
+/* link header tidak mengubah align & width */
+.table thead th > a{
+  display:flex; align-items:center; justify-content:center; gap:6px; width:100%;
+}
+.table thead th .arr{opacity:.6; font-size:11px}
+.table tbody tr:nth-child(even){background:rgba(255,255,255,.02)}
 .table tbody tr:hover{background:rgba(59,130,246,.07)}
-
 .center{text-align:center}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px}
 .nowrap{white-space:nowrap}
 .badge{padding:3px 8px; border-radius:999px; font-size:12px; color:#fff; display:inline-block}
 .badge.service{background:#454545}
 
-/* === versi (kolom 5 & 6) di-center dan tetap ellipsis === */
-.ver{ text-align:center; }
-.ver .chip{ display:inline-block; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle; }
-.ver .chip code{ background:#0b1328; border:1px solid var(--line); padding:2px 6px; border-radius:6px; display:inline-block; }
+/* versi di-center dan ellipsis */
+.ver{text-align:center}
+.ver .chip{display:inline-block; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle}
+.ver .chip code{background:#0b1328; border:1px solid var(--line); padding:2px 6px; border-radius:6px; display:inline-block}
 
-.pager{display:flex; gap:8px; align-items:center; justify-content:flex-end}
+.pager{display:flex; gap:8px; align-items:center; justify-content:flex-end; margin-top:12px}
 .num{padding:6px 10px; border-radius:8px; border:1px solid var(--line); background:#0b1328}
+
+/* bantu alignment global tanpa class di setiap <td> */
+td:nth-child(1), th:nth-child(1),
+td:nth-child(2), th:nth-child(2),
+td:nth-child(4), th:nth-child(4),
+td:nth-child(5), th:nth-child(5),
+td:nth-child(6), th:nth-child(6){ text-align:center; }
 </style>
 </head>
 <body>
@@ -164,54 +190,50 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
 
     <div class="table-wrap">
       <table class="table">
+        <!-- lebar pasti per-kolom -->
         <colgroup>
-          <col style="width:110px"><!-- Server -->
-          <col style="width:90px"><!-- Site -->
-          <col><!-- Project (auto) -->
-          <col style="width:180px"><!-- Service -->
-          <col style="width:230px"><!-- Latest -->
-          <col style="width:230px"><!-- New -->
-          <col style="width:160px"><!-- Created -->
-      
+          <col style="width:120px">  <!-- Server -->
+          <col style="width:90px">   <!-- Site -->
+          <col style="width:260px">  <!-- Project -->
+          <col style="width:180px">  <!-- Service -->
+          <col style="width:240px">  <!-- Latest -->
+          <col style="width:240px">  <!-- New -->
+          <col style="width:170px">  <!-- Created -->
         </colgroup>
+
         <thead>
           <tr>
             <?php
-              function th($label,$key,$sort,$dir,$class=''){
+              function th($label,$key,$sort,$dir){
                 $is=($sort===$key); $next=($is && $dir==='ASC')?'desc':'asc';
                 $arrow=$is?($dir==='ASC'?'▲':'▼'):'';
-                $cls = $class ? ' class="'.h($class).'"' : '';
-                echo '<th'.$cls.'><a href="'.h(url_with(['sort'=>$key,'dir'=>$next,'page'=>1])).'">'.h($label).($arrow?' <span style="color:#9ca3af">'.$arrow.'</span>':'').'</a></th>';
+                echo '<th><a href="'.h(url_with(['sort'=>$key,'dir'=>$next,'page'=>1])).'"><span>'
+                    .h($label).'</span>'.($arrow?'<span class="arr">'.$arrow.'</span>':'').'</a></th>';
               }
-              th('Server','server',$sort,$dir,'center');
-              th('Site','site',$sort,$dir,'center');
+              th('Server','server',$sort,$dir);
+              th('Site','site',$sort,$dir);
               th('Project','project',$sort,$dir);
-              th('Service','service',$sort,$dir,'center');
-              th('Latest Version','latest_version',$sort,$dir,'center');
-              th('New Version','new_version',$sort,$dir,'center');
+              th('Service','service',$sort,$dir);
+              th('Latest Version','latest_version',$sort,$dir);
+              th('New Version','new_version',$sort,$dir);
               th('Created','created_at',$sort,$dir);
-          
             ?>
           </tr>
         </thead>
+
         <tbody>
           <?php if(!$rows): ?>
-            <tr><td colspan="7" class="mono" style="color:#9ca3af">Tidak ada data.</td></tr>
+            <tr><td colspan="7" class="mono" style="color:#9ca3af; text-align:center">Tidak ada data.</td></tr>
           <?php else: foreach($rows as $r): ?>
             <tr>
-              <td class="mono center"><?=h($r['server'])?></td>
-              <td class="center"><?=badge($r['site'])?></td>
+              <td class="mono"><?=h($r['server'])?></td>
+              <td><?=badge($r['site'])?></td>
               <td class="mono"><?=h($r['project'])?></td>
-              <td class="center"><span class="badge service"><?=h($r['service'])?></span></td>
+              <td><span class="badge service"><?=h($r['service'])?></span></td>
               <?php $lv=trim((string)$r['latest_version']); $nv=trim((string)$r['new_version']); ?>
-              <td class="ver">
-                <?php echo $lv==='' ? '<span style="color:#9ca3af">—</span>' : '<span class="chip" title="'.h($lv).'"><code class="mono">'.h($lv).'</code></span>'; ?>
-              </td>
-              <td class="ver">
-                <?php echo $nv==='' ? '<span style="color:#9ca3af">—</span>' : '<span class="chip" title="'.h($nv).'"><code class="mono">'.h($nv).'</code></span>'; ?>
-              </td>
-              <td class="mono nowrap"><?=h($r['created_at'])?></td>
-             
+              <td class="ver"><?= $lv===''?'<span style="color:#9ca3af">—</span>':'<span class="chip" title="'.h($lv).'"><code class="mono">'.h($lv).'</code></span>' ?></td>
+              <td class="ver"><?= $nv===''?'<span style="color:#9ca3af">—</span>':'<span class="chip" title="'.h($nv).'"><code class="mono">'.h($nv).'</code></span>' ?></td>
+              <td class="mono"><?=h($r['created_at'])?></td>
             </tr>
           <?php endforeach; endif; ?>
         </tbody>
@@ -232,33 +254,4 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
     </div>
   </div>
 </div>
-
-<script>
-(() => {
-  const parser = new DOMParser(); let lastSwapAt = 0, swapping = false;
-  async function softRefresh(){
-    if (document.hidden || swapping) return; swapping = true;
-    try{
-      const res = await fetch(location.href,{cache:'no-store'}); const html = await res.text();
-      const doc = parser.parseFromString(html,'text/html');
-      const newTbody = doc.querySelector('table.table tbody');
-      const oldTbody = document.querySelector('table.table tbody');
-      const newPager = doc.querySelector('.pager'); const oldPager = document.querySelector('.pager');
-      if (!newTbody || !oldTbody) return;
-      const oldKeys = new Set([...oldTbody.querySelectorAll('tr')].map(tr => (tr.cells[0]?.textContent||'').trim()));
-      oldTbody.replaceWith(newTbody);
-      newTbody.querySelectorAll('tr').forEach(tr=>{
-        const key=(tr.cells[0]?.textContent||'').trim(); if(!oldKeys.has(key)) tr.style.animation='flashRow 1.2s ease-out';
-      });
-      if(newPager && oldPager) oldPager.replaceWith(newPager);
-      lastSwapAt = Date.now();
-    }catch(e){} finally{ swapping=false; }
-  }
-  setInterval(()=>{ if(!document.hidden && Date.now()-lastSwapAt>=3000) softRefresh(); },5000);
-  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) softRefresh(); });
-})();
-</script>
-
-<style>@keyframes flashRow {0%{background:rgba(34,197,94,.18)}100%{background:transparent}}</style>
 </body></html>
-

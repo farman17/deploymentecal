@@ -1,5 +1,5 @@
 <?php
-/* requests.php — UI ringan monitoring deploy (kolom rapi + align) */
+/* requests.php — UI ringan monitoring deploy (rapi + align konsisten) */
 
 $DB_HOST = getenv('DB_HOST') ?: 'db';
 $DB_PORT = getenv('DB_PORT') ?: '3306';
@@ -46,6 +46,7 @@ try{
   ]);
 }catch(Throwable $e){ http_response_code(500); echo '<pre>DB connect failed: '.h($e->getMessage()).'</pre>'; exit; }
 
+/* == Export CSV == */
 if($export==='csv'){
   $sql="SELECT server,site,project,service,latest_version,new_version,created_at,updated_at
         FROM requests $sqlWhere ORDER BY $sort $dir LIMIT 100000";
@@ -58,6 +59,7 @@ if($export==='csv'){
   fclose($out); exit;
 }
 
+/* == Query list == */
 $stc=$pdo->prepare("SELECT COUNT(*) FROM requests $sqlWhere"); $stc->execute($params); $total=(int)$stc->fetchColumn();
 $offset=($page-1)*$perPage;
 $sql="SELECT server, site, project, service, latest_version, new_version, created_at
@@ -69,6 +71,7 @@ $st->bindValue(':off',$offset,PDO::PARAM_INT);
 $st->execute();
 $rows=$st->fetchAll();
 
+/* == Helpers == */
 function url_with($over){
   $q=array_merge($_GET,$over);
   foreach($q as $k=>$v){ if($v===''||$v===null) unset($q[$k]); }
@@ -97,20 +100,20 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
 .btn{display:inline-block; padding:8px 12px; border-radius:8px; border:1px solid var(--line); background:#0b1328; color:var(--fg); cursor:pointer; font-size:13px}
 .btn.primary{background:linear-gradient(135deg,#2563eb,#10b981); border:none}
 
-/* TABLE (dense) */
+/* TABLE (dense & stabil) */
 .table-wrap{overflow:auto; border-radius:10px; margin-top:8px}
 .table{
   width:100%;
-  min-width:1120px;          /* lebih kecil dari sebelumnya */
+  min-width:1120px;
   border-collapse:separate;
   border-spacing:0;
-  table-layout:fixed;        /* sesuai colgroup */
+  table-layout:fixed;        /* patuhi colgroup */
 }
 .table th,.table td{
-  padding:6px 8px;           /* << pad mengecil */
+  padding:6px 8px;           /* pad kecil = tabel rapat */
   border-bottom:1px solid var(--line);
   vertical-align:middle;
-  font-size:13px;            /* << font sedikit lebih kecil */
+  font-size:13px;
   line-height:1.2;
   white-space:nowrap;
   overflow:hidden;
@@ -121,34 +124,26 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
   position:sticky; top:0; z-index:1;
   background:var(--card);
 }
-/* link header tidak mengubah align */
 .table thead th > a{
-  display:block; text-align:inherit;  width:100%;
+  display:block; width:100%; text-align:inherit; /* header ikut align kolom */
 }
-.table thead th .arr{opacity:.6; font-size:10px}
+.table thead th .arr{opacity:.6; font-size:10px; margin-left:6px}
 .table tbody tr:nth-child(even){background:rgba(255,255,255,.015)}
 .table tbody tr:hover{background:rgba(59,130,246,.06)}
 .center{text-align:center}
+.left{text-align:left}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px}
 .badge{padding:2px 6px; border-radius:999px; font-size:11.5px; color:#fff; display:inline-block}
 .badge.service{background:#424242}
 
-/* versi di-center + chip lebih pendek */
+/* versi di-center + chip ringkas */
 .ver{text-align:center}
 .ver .chip{display:inline-block; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle}
 .ver .chip code{background:#0b1328; border:1px solid var(--line); padding:1px 5px; border-radius:5px; display:inline-block}
 
 .pager{display:flex; gap:6px; align-items:center; justify-content:flex-end; margin-top:10px}
 .num{padding:5px 9px; border-radius:7px; border:1px solid var(--line); background:#0b1328}
-
-/* bantu alignment global per kolom */
-td:nth-child(1), th:nth-child(1),
-td:nth-child(2), th:nth-child(2),
-td:nth-child(4), th:nth-child(4),
-td:nth-child(5), th:nth-child(5),
-td:nth-child(6), th:nth-child(6){ text-align:center; }
 </style>
-
 </head>
 <body>
 <div class="wrap">
@@ -185,40 +180,45 @@ td:nth-child(6), th:nth-child(6){ text-align:center; }
             <?php endforeach; ?>
           </select>
         </div>
-        <div><button class="btn primary" type="submit">Terapkan</button> <a class="btn" href="requests.php">Reset</a></div>
+        <div style="display:flex; gap:8px; align-items:center">
+          <button class="btn primary" type="submit">Terapkan</button>
+          <a class="btn" href="requests.php">Reset</a>
+          <a class="btn" href="<?=h(url_with(['export'=>'csv']))?>">Ekspor CSV</a>
+        </div>
       </div>
     </form>
 
     <div class="table-wrap">
       <table class="table">
-        <!-- lebar pasti per-kolom -->
-<colgroup>
-  <col style="width:110px">  <!-- Server -->
-  <col style="width:80px">   <!-- Site -->
-  <col style="width:220px">  <!-- Project -->
-  <col style="width:160px">  <!-- Service -->
-  <col style="width:210px">  <!-- Latest -->
-  <col style="width:210px">  <!-- New -->
-  <col style="width:160px">  <!-- Created -->
-</colgroup>
-
-
+        <!-- lebar pasti per kolom agar tidak “loncat” -->
+        <colgroup>
+          <col style="width:110px">  <!-- Server -->
+          <col style="width:80px">   <!-- Site -->
+          <col style="width:220px">  <!-- Project -->
+          <col style="width:160px">  <!-- Service -->
+          <col style="width:210px">  <!-- Latest -->
+          <col style="width:210px">  <!-- New -->
+          <col style="width:160px">  <!-- Created -->
+        </colgroup>
         <thead>
           <tr>
             <?php
-              function th($label,$key,$sort,$dir){
-                $is=($sort===$key); $next=($is && $dir==='ASC')?'desc':'asc';
-                $arrow=$is?($dir==='ASC'?'▲':'▼'):'';
-                echo '<th><a href="'.h(url_with(['sort'=>$key,'dir'=>$next,'page'=>1])).'"><span>'
-                    .h($label).'</span>'.($arrow?'<span class="arr">'.$arrow.'</span>':'').'</a></th>';
+              function th($label,$key,$sort,$dir,$class=''){
+                $is   = ($sort===$key);
+                $next = ($is && $dir==='ASC') ? 'desc' : 'asc';
+                $arrow= $is ? ($dir==='ASC'?'▲':'▼') : '';
+                $aria = $is ? ($dir==='ASC'?'ascending':'descending') : 'none';
+                $cls  = $class ? ' class="'.$class.'"' : '';
+                echo '<th'.$cls.' aria-sort="'.$aria.'"><a href="'.h(url_with(['sort'=>$key,'dir'=>$next,'page'=>1])).'">'
+                    .h($label).($arrow?'<span class="arr">'.$arrow.'</span>':'').'</a></th>';
               }
-              th('Server','server',$sort,$dir);
-              th('Site','site',$sort,$dir);
-              th('Project','project',$sort,$dir);
-              th('Service','service',$sort,$dir);
-              th('Latest Version','latest_version',$sort,$dir);
-              th('New Version','new_version',$sort,$dir);
-              th('Created','created_at',$sort,$dir);
+              th('Server','server',$sort,$dir,'center');
+              th('Site','site',$sort,$dir,'center');
+              th('Project','project',$sort,$dir,'left');
+              th('Service','service',$sort,$dir,'center');
+              th('Latest Version','latest_version',$sort,$dir,'center');
+              th('New Version','new_version',$sort,$dir,'center');
+              th('Created','created_at',$sort,$dir,'left');
             ?>
           </tr>
         </thead>
@@ -228,14 +228,20 @@ td:nth-child(6), th:nth-child(6){ text-align:center; }
             <tr><td colspan="7" class="mono" style="color:#9ca3af; text-align:center">Tidak ada data.</td></tr>
           <?php else: foreach($rows as $r): ?>
             <tr>
-              <td class="mono"><?=h($r['server'])?></td>
-              <td><?=badge($r['site'])?></td>
-              <td class="mono"><?=h($r['project'])?></td>
-              <td><span class="badge service"><?=h($r['service'])?></span></td>
+              <td class="mono center"><?=h($r['server'])?></td>
+              <td class="center"><?=badge($r['site'])?></td>
+              <td class="mono left" title="<?=h($r['project'])?>"><?=h($r['project'])?></td>
+              <td class="center"><span class="badge service" title="<?=h($r['service'])?>"><?=h($r['service'])?></span></td>
               <?php $lv=trim((string)$r['latest_version']); $nv=trim((string)$r['new_version']); ?>
-              <td class="ver"><?= $lv===''?'<span style="color:#9ca3af">—</span>':'<span class="chip" title="'.h($lv).'"><code class="mono">'.h($lv).'</code></span>' ?></td>
-              <td class="ver"><?= $nv===''?'<span style="color:#9ca3af">—</span>':'<span class="chip" title="'.h($nv).'"><code class="mono">'.h($nv).'</code></span>' ?></td>
-              <td class="mono"><?=h($r['created_at'])?></td>
+              <td class="ver">
+                <?= $lv==='' ? '<span style="color:#9ca3af">—</span>'
+                              : '<span class="chip" title="'.h($lv).'"><code class="mono">'.h($lv).'</code></span>' ?>
+              </td>
+              <td class="ver">
+                <?= $nv==='' ? '<span style="color:#9ca3af">—</span>'
+                              : '<span class="chip" title="'.h($nv).'"><code class="mono">'.h($nv).'</code></span>' ?>
+              </td>
+              <td class="mono left"><?=h($r['created_at'])?></td>
             </tr>
           <?php endforeach; endif; ?>
         </tbody>

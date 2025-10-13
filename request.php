@@ -28,7 +28,7 @@ $sort     = $_GET['sort'] ?? 'created_at';
 $dir      = strtolower($_GET['dir'] ?? 'desc') === 'asc' ? 'ASC' : 'DESC';
 $export   = $_GET['export'] ?? '';
 
-// kolom yang boleh disort (status tidak ikut)
+// kolom yang boleh disort
 $sortable = [
   'nomor_form','server','site','project','service',
   'latest_version','new_version','created_at','updated_at'
@@ -124,27 +124,29 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
 .btn.primary{background:linear-gradient(135deg,#2563eb,#10b981); border:none}
 
 /* TABLE */
-.table-wrap{ overflow:auto; border-radius:12px; padding-bottom:16px; } /* space buat scrollbar */
+.table-wrap{ overflow:auto; border-radius:12px; margin-bottom:14px; } /* jarak supaya scrollbar tak nutup pager */
 .table{
   width:100%;
-  border-collapse: collapse;   /* header & body 1 grid */
-  table-layout: fixed;         /* patuh ke colgroup */
+  border-collapse:collapse;      /* header & body satu grid */
+  table-layout:fixed;            /* hormati colgroup */
   margin-top:14px;
 }
 .table th,.table td{ padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:middle; font-size:14px; white-space:nowrap; }
-.table th{ font-weight:600; text-align:left; position:sticky; top:0; background:var(--card); z-index:1; }
+.table th{ font-weight:600; position:sticky; top:0; background:var(--card); z-index:1; }
+.table thead th a{ display:block; } /* link header isi penuh, biar center rapi */
+
 .table tr:nth-child(even){background:rgba(255,255,255,.02)}
 .table tbody tr:hover{background:rgba(59,130,246,.07)}
 
 .center{text-align:center}
-.cell-ver{max-width:220px; overflow:hidden; text-overflow:ellipsis}
+.cell-ver{max-width:230px; overflow:hidden; text-overflow:ellipsis}
 .cell-ver code{background:#0b1328; border:1px solid var(--line); padding:2px 6px; border-radius:6px; display:inline-block}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px}
 .nowrap{white-space:nowrap}
 .badge{padding:3px 8px; border-radius:999px; font-size:12px; color:#fff; display:inline-block}
 .badge.service{ background:#454545; }
 .muted{color:var(--muted)}
-.pager{display:flex; gap:8px; align-items:center; justify-content:flex-end; margin-top:10px}
+.pager{display:flex; gap:8px; align-items:center; justify-content:flex-end; }
 .num{padding:6px 10px; border-radius:8px; border:1px solid var(--line); background:#0b1328}
 .grid-2{display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center}
 </style>
@@ -195,25 +197,25 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
     <div class="table-wrap">
       <table class="table">
         <colgroup>
-          <col style="width:10%">  <!-- Server -->
-          <col style="width:8%">   <!-- Site -->
-          <col style="width:16%">  <!-- Project -->
-          <col style="width:14%">  <!-- Service -->
-          <col style="width:18%">  <!-- Latest Version -->
-          <col style="width:18%">  <!-- New Version -->
-          <col style="width:8%">   <!-- Created -->
-          <col style="width:8%">   <!-- Updated -->
+          <col style="width:110px">  <!-- Server -->
+          <col style="width:90px">   <!-- Site -->
+          <col>                      <!-- Project (auto, isi sisa lebar) -->
+          <col style="width:180px">  <!-- Service -->
+          <col style="width:230px">  <!-- Latest Version -->
+          <col style="width:230px">  <!-- New Version -->
+          <col style="width:160px">  <!-- Created -->
+          <col style="width:160px">  <!-- Updated -->
         </colgroup>
 
         <thead>
           <tr>
             <?php
               function th($label,$key,$sort,$dir,$class=''){
-                $is=($sort===$key); $next=($is && $dir==='ASC')?'desc':'asc'; $arrow=$is?($dir==='ASC'?'▲':'▼'):'';
+                $is=($sort===$key); $next=($is && $dir==='ASC')?'desc':'asc';
+                $arrow=$is?($dir==='ASC'?'▲':'▼'):'';
                 $cls = $class ? ' class="'.h($class).'"' : '';
                 echo '<th'.$cls.'><a href="'.h(url_with(['sort'=>$key,'dir'=>$next,'page'=>1])).'">'.h($label).($arrow?' <span class="muted">'.$arrow.'</span>':'').'</a></th>';
               }
-              // Nomor Tiket disembunyikan
               th('Server','server',$sort,$dir,'center');
               th('Site','site',$sort,$dir,'center');
               th('Project','project',$sort,$dir);
@@ -284,7 +286,8 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
       const oldPager = document.querySelector('.pager');
       if (!newTbody || !oldTbody) return;
 
-      const oldKeys = new Set([...oldTbody.querySelectorAll('tr')].map(tr => (tr.cells[0]?.textContent || '').trim()));
+      const oldKeys = new Set([...oldTbody.querySelectorAll('tr')]
+        .map(tr => (tr.cells[0]?.textContent || '').trim()));
       oldTbody.replaceWith(newTbody);
       newTbody.querySelectorAll('tr').forEach(tr => {
         const key = (tr.cells[0]?.textContent || '').trim();
@@ -305,3 +308,4 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
 </script>
 </body>
 </html>
+

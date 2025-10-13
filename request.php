@@ -123,7 +123,7 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
 }
 /* link header tidak mengubah align */
 .table thead th > a{
-  display:flex; align-items:center; justify-content:center; gap:4px; width:100%;
+  display:block; text-align:inherit; align-items:center; justify-content:center; gap:4px; width:100%;
 }
 .table thead th .arr{opacity:.6; font-size:10px}
 .table tbody tr:nth-child(even){background:rgba(255,255,255,.015)}

@@ -172,7 +172,7 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
           <col style="width:230px"><!-- Latest -->
           <col style="width:230px"><!-- New -->
           <col style="width:160px"><!-- Created -->
-          <col style="width:160px"><!-- Updated -->
+      
         </colgroup>
         <thead>
           <tr>
@@ -190,13 +190,13 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
               th('Latest Version','latest_version',$sort,$dir,'center');
               th('New Version','new_version',$sort,$dir,'center');
               th('Created','created_at',$sort,$dir);
-              th('Updated','updated_at',$sort,$dir);
+          
             ?>
           </tr>
         </thead>
         <tbody>
           <?php if(!$rows): ?>
-            <tr><td colspan="8" class="mono" style="color:#9ca3af">Tidak ada data.</td></tr>
+            <tr><td colspan="7" class="mono" style="color:#9ca3af">Tidak ada data.</td></tr>
           <?php else: foreach($rows as $r): ?>
             <tr>
               <td class="mono center"><?=h($r['server'])?></td>
@@ -211,7 +211,7 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
                 <?php echo $nv==='' ? '<span style="color:#9ca3af">—</span>' : '<span class="chip" title="'.h($nv).'"><code class="mono">'.h($nv).'</code></span>'; ?>
               </td>
               <td class="mono nowrap"><?=h($r['created_at'])?></td>
-              <td class="mono nowrap"><?=h($r['updated_at'])?></td>
+             
             </tr>
           <?php endforeach; endif; ?>
         </tbody>

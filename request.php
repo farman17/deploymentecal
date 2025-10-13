@@ -134,10 +134,16 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
 .btn.primary{background:linear-gradient(135deg,#2563eb,#10b981); border:none}
 
 /* TABLE */
-.table-wrap{ overflow:auto; border-radius:12px; }
-.table{width:100%; min-width:1100px; border-collapse:separate; border-spacing:0; margin-top:14px; table-layout:fixed;}
-.table th,.table td{padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:middle; font-size:14px; white-space:nowrap;}
-.table th{font-weight:600; text-align:left; position:sticky; top:0; background:var(--card); z-index:1}
+.table-wrap{ overflow:auto; border-radius:12px; scrollbar-gutter: stable both-edges; }
+.table{
+  width:100%;
+  border-collapse: collapse;   /* pastikan header & body 1 grid */
+  table-layout: fixed;         /* patuh ke colgroup */
+  margin-top:14px;
+}
+.table th,.table td{ padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:middle; font-size:14px; white-space:nowrap; }
+.table th{ font-weight:600; text-align:left; position:sticky; top:0; background:var(--card); z-index:1; }
+
 .table tr:nth-child(even){background:rgba(255,255,255,.02)}
 .table tbody tr:hover{background:rgba(59,130,246,.07)}
 

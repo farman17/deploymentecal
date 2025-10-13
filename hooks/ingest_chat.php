@@ -6,6 +6,7 @@
  *   - nomor_form   := GIT SHORT HASH (upper, 8 chars)
  *   - dev_requestor:= GIT AUTHOR
  */
+const INGEST_TOKEN = '4f9a7c2e1e9c4f6f2d5b1a9c0e7d3a12b6c9f1e4d7a8b2c3d4e5f6a7b8c9d0e1';
 
 declare(strict_types=1);
 date_default_timezone_set('Asia/Jakarta');
@@ -17,7 +18,7 @@ $DB_PORT  = getenv('DB_PORT') ?: '3306';
 $DB_NAME  = getenv('DB_NAME') ?: 'deploymentecal';
 $DB_USER  = getenv('DB_USER') ?: 'deployuser';
 $DB_PASS  = getenv('DB_PASS') ?: 'secret';
-$INGEST_TOKEN = getenv('INGEST_TOKEN') ?: 'please-change-me';
+$INGEST_TOKEN = getenv('4f9a7c2e1e9c4f6f2d5b1a9c0e7d3a12b6c9f1e4d7a8b2c3d4e5f6a7b8c9d0e1') ?: 'please-change-me';
 
 /* ======================== Helpers ======================== */
 function h401($msg){ http_response_code(401); echo json_encode(['ok'=>false,'error'=>$msg]); exit; }

@@ -207,16 +207,16 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
 
     <div class="table-wrap">
       <table class="table">
-        <colgroup>
-          <col style="width:110px">   <!-- Server -->
-          <col style="width:90px">    <!-- Site -->
-          <col style="width:170px">   <!-- Project -->
-          <col style="width:180px">   <!-- Service -->
-          <col style="width:230px">   <!-- Latest -->
-          <col style="width:230px">   <!-- New -->
-          <col style="width:160px">   <!-- Created -->
-          <col style="width:160px">   <!-- Updated -->
-        </colgroup>
+<colgroup>
+  <col style="width:10%">  <!-- Server -->
+  <col style="width:8%">   <!-- Site -->
+  <col style="width:16%">  <!-- Project -->
+  <col style="width:14%">  <!-- Service -->
+  <col style="width:18%">  <!-- Latest Version -->
+  <col style="width:18%">  <!-- New Version -->
+  <col style="width:8%">   <!-- Created -->
+  <col style="width:8%">   <!-- Updated -->
+</colgroup>
 
         <thead>
           <tr>

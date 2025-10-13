@@ -115,7 +115,7 @@ function badge($text,$type){
 <html lang="id">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DevOps Requests Monitoring</title>
+<title>DevOps Deploy Monitoring</title>
 <style>
 :root{
   --bg:#0b1220; --fg:#e5e7eb; --muted:#9ca3af; --card:#0f172a; --line:#1f2937;
@@ -157,7 +157,7 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
 <body>
 <div class="wrap">
   <h2 style="margin:0 0 12px; display:flex; gap:10px; align-items:center">
-    DevOps Requests Monitoring
+    DevOps Deploy Monitoring
     <span class="muted" style="font-size:14px">— <?=h(number_format($total))?> entri</span>
   </h2>
 

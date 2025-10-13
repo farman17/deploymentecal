@@ -84,33 +84,34 @@ function badge($text){
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>DevOps Deploy Monitoring</title>
 <style>
-:root{ --bg:#0b1220; --fg:#e5e7eb; --muted:#9ca3af; --card:#0f172a; --line:#1f2937; --accent2:#3b82f6; }
+:root{ --bg:#0b1220; --fg:#e5e7eb; --muted:#9ca3af; --card:#0f172a; --line:#1d2636; --accent2:#3b82f6; }
 *{box-sizing:border-box}
 body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu; background:var(--bg); color:var(--fg)}
 a{color:var(--accent2); text-decoration:none}
-.wrap{max-width:1680px; margin:24px auto; padding:0 24px}
-.card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px}
-.toolbar{display:grid; grid-template-columns:1fr auto; gap:12px; align-items:end}
-.filters{display:grid; grid-template-columns:repeat(7,1fr); gap:8px}
-label{font-size:12px; color:var(--muted)}
-input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid var(--line); background:#0b1328; color:var(--fg)}
-.btn{display:inline-block; padding:10px 14px; border-radius:10px; border:1px solid var(--line); background:#0b1328; color:var(--fg); cursor:pointer}
+.wrap{max-width:1680px; margin:20px auto; padding:0 20px}
+.card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px}
+.toolbar{display:grid; grid-template-columns:1fr auto; gap:10px; align-items:end}
+.filters{display:grid; grid-template-columns:repeat(7,1fr); gap:6px}
+label{font-size:11.5px; color:var(--muted)}
+input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid var(--line); background:#0b1328; color:var(--fg); font-size:13px}
+.btn{display:inline-block; padding:8px 12px; border-radius:8px; border:1px solid var(--line); background:#0b1328; color:var(--fg); cursor:pointer; font-size:13px}
 .btn.primary{background:linear-gradient(135deg,#2563eb,#10b981); border:none}
 
-/* TABLE */
-.table-wrap{overflow:auto; border-radius:12px; margin-top:14px;}
+/* TABLE (dense) */
+.table-wrap{overflow:auto; border-radius:10px; margin-top:8px}
 .table{
   width:100%;
-  min-width:1280px;              /* cegah gepeng */
+  min-width:1120px;          /* lebih kecil dari sebelumnya */
   border-collapse:separate;
   border-spacing:0;
-  table-layout:fixed;            /* patok colgroup */
+  table-layout:fixed;        /* sesuai colgroup */
 }
 .table th,.table td{
-  padding:10px 12px;
+  padding:6px 8px;           /* << pad mengecil */
   border-bottom:1px solid var(--line);
   vertical-align:middle;
-  font-size:14px;
+  font-size:13px;            /* << font sedikit lebih kecil */
+  line-height:1.2;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
@@ -120,34 +121,34 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
   position:sticky; top:0; z-index:1;
   background:var(--card);
 }
-/* link header tidak mengubah align & width */
+/* link header tidak mengubah align */
 .table thead th > a{
-  display:flex; align-items:center; justify-content:center; gap:6px; width:100%;
+  display:flex; align-items:center; justify-content:center; gap:4px; width:100%;
 }
-.table thead th .arr{opacity:.6; font-size:11px}
-.table tbody tr:nth-child(even){background:rgba(255,255,255,.02)}
-.table tbody tr:hover{background:rgba(59,130,246,.07)}
+.table thead th .arr{opacity:.6; font-size:10px}
+.table tbody tr:nth-child(even){background:rgba(255,255,255,.015)}
+.table tbody tr:hover{background:rgba(59,130,246,.06)}
 .center{text-align:center}
-.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px}
-.nowrap{white-space:nowrap}
-.badge{padding:3px 8px; border-radius:999px; font-size:12px; color:#fff; display:inline-block}
-.badge.service{background:#454545}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px}
+.badge{padding:2px 6px; border-radius:999px; font-size:11.5px; color:#fff; display:inline-block}
+.badge.service{background:#424242}
 
-/* versi di-center dan ellipsis */
+/* versi di-center + chip lebih pendek */
 .ver{text-align:center}
-.ver .chip{display:inline-block; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle}
-.ver .chip code{background:#0b1328; border:1px solid var(--line); padding:2px 6px; border-radius:6px; display:inline-block}
+.ver .chip{display:inline-block; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle}
+.ver .chip code{background:#0b1328; border:1px solid var(--line); padding:1px 5px; border-radius:5px; display:inline-block}
 
-.pager{display:flex; gap:8px; align-items:center; justify-content:flex-end; margin-top:12px}
-.num{padding:6px 10px; border-radius:8px; border:1px solid var(--line); background:#0b1328}
+.pager{display:flex; gap:6px; align-items:center; justify-content:flex-end; margin-top:10px}
+.num{padding:5px 9px; border-radius:7px; border:1px solid var(--line); background:#0b1328}
 
-/* bantu alignment global tanpa class di setiap <td> */
+/* bantu alignment global per kolom */
 td:nth-child(1), th:nth-child(1),
 td:nth-child(2), th:nth-child(2),
 td:nth-child(4), th:nth-child(4),
 td:nth-child(5), th:nth-child(5),
 td:nth-child(6), th:nth-child(6){ text-align:center; }
 </style>
+
 </head>
 <body>
 <div class="wrap">
@@ -191,15 +192,16 @@ td:nth-child(6), th:nth-child(6){ text-align:center; }
     <div class="table-wrap">
       <table class="table">
         <!-- lebar pasti per-kolom -->
-        <colgroup>
-          <col style="width:120px">  <!-- Server -->
-          <col style="width:90px">   <!-- Site -->
-          <col style="width:260px">  <!-- Project -->
-          <col style="width:180px">  <!-- Service -->
-          <col style="width:240px">  <!-- Latest -->
-          <col style="width:240px">  <!-- New -->
-          <col style="width:170px">  <!-- Created -->
-        </colgroup>
+<colgroup>
+  <col style="width:110px">  <!-- Server -->
+  <col style="width:80px">   <!-- Site -->
+  <col style="width:220px">  <!-- Project -->
+  <col style="width:160px">  <!-- Service -->
+  <col style="width:210px">  <!-- Latest -->
+  <col style="width:210px">  <!-- New -->
+  <col style="width:160px">  <!-- Created -->
+</colgroup>
+
 
         <thead>
           <tr>

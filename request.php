@@ -13,14 +13,13 @@ $dbUser = $DB_USER;
 $dbPass = $DB_PASS;
 
 date_default_timezone_set('Asia/Jakarta');
-
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
 
 // ===== Input & default =====
 $q        = trim($_GET['q'] ?? '');
 $server   = strtoupper(trim($_GET['server'] ?? ''));
 $project  = strtoupper(trim($_GET['project'] ?? ''));
-$status   = strtoupper(trim($_GET['status'] ?? '')); // tetap didukung via querystring, tapi tidak ditampilkan di UI
+$status   = strtoupper(trim($_GET['status'] ?? '')); // didukung via querystring, UI disembunyikan
 $from     = trim($_GET['from'] ?? '');
 $to       = trim($_GET['to'] ?? '');
 $page     = max(1, (int)($_GET['page'] ?? 1));
@@ -32,8 +31,7 @@ $export   = $_GET['export'] ?? '';
 // kolom yang boleh disort (status tidak ikut)
 $sortable = [
   'nomor_form','server','site','project','service',
-  'latest_version','new_version',
-  'created_at','updated_at'
+  'latest_version','new_version','created_at','updated_at'
 ];
 if(!in_array($sort, $sortable, true)) $sort = 'created_at';
 
@@ -63,11 +61,10 @@ try{
   echo '<pre>DB connect failed: '.h($e->getMessage()).'</pre>'; exit;
 }
 
-// ===== CSV Export (nomor_form tetap diekspor) =====
+// ===== CSV Export =====
 if($export==='csv'){
   $sql="SELECT id, nomor_form, dev_requestor, server, site, project, service, source_branch,
-               latest_version, new_version,
-               created_at, updated_at
+               latest_version, new_version, created_at, updated_at
         FROM requests $sqlWhere ORDER BY $sort $dir LIMIT 100000";
   $st=$pdo->prepare($sql); $st->execute($params);
   header('Content-Type: text/csv; charset=utf-8');
@@ -86,8 +83,7 @@ $stc=$pdo->prepare("SELECT COUNT(*) FROM requests $sqlWhere"); $stc->execute($pa
 
 $offset=($page-1)*$perPage;
 $sql="SELECT id, nomor_form, dev_requestor, server, site, project, service, source_branch,
-             latest_version, new_version,
-             created_at, updated_at
+             latest_version, new_version, created_at, updated_at
       FROM requests $sqlWhere ORDER BY $sort $dir LIMIT :lim OFFSET :off";
 $st=$pdo->prepare($sql);
 foreach($params as $k=>$v){ $st->bindValue($k,$v); }
@@ -103,10 +99,7 @@ function url_with($over){
   return '?'.http_build_query($q);
 }
 function badge($text,$type){
-  $colors = [
-    'STAGING'     => '#6366f1',
-    'PRODUCTION'  => '#966b9cff',
-  ];
+  $colors = ['STAGING'=>'#6366f1','PRODUCTION'=>'#966b9cff'];
   $bg = $colors[$text] ?? '#0ea5e9';
   return '<span class="badge" style="background:'.$bg.'">'.h($text).'</span>';
 }
@@ -117,10 +110,7 @@ function badge($text,$type){
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>DevOps Deploy Monitoring</title>
 <style>
-:root{
-  --bg:#0b1220; --fg:#e5e7eb; --muted:#9ca3af; --card:#0f172a; --line:#1f2937;
-  --accent:#22c55e; --accent2:#3b82f6;
-}
+:root{ --bg:#0b1220; --fg:#e5e7eb; --muted:#9ca3af; --card:#0f172a; --line:#1f2937; --accent:#22c55e; --accent2:#3b82f6; }
 *{box-sizing:border-box}
 body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu; background:var(--bg); color:var(--fg)}
 a{color:var(--accent2); text-decoration:none}
@@ -134,22 +124,21 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
 .btn.primary{background:linear-gradient(135deg,#2563eb,#10b981); border:none}
 
 /* TABLE */
-.table-wrap{ overflow:auto; border-radius:12px; scrollbar-gutter: stable both-edges; }
+.table-wrap{ overflow:auto; border-radius:12px; padding-bottom:16px; } /* space buat scrollbar */
 .table{
   width:100%;
-  border-collapse: collapse;   /* pastikan header & body 1 grid */
+  border-collapse: collapse;   /* header & body 1 grid */
   table-layout: fixed;         /* patuh ke colgroup */
   margin-top:14px;
 }
 .table th,.table td{ padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:middle; font-size:14px; white-space:nowrap; }
 .table th{ font-weight:600; text-align:left; position:sticky; top:0; background:var(--card); z-index:1; }
-
 .table tr:nth-child(even){background:rgba(255,255,255,.02)}
 .table tbody tr:hover{background:rgba(59,130,246,.07)}
 
+.center{text-align:center}
 .cell-ver{max-width:220px; overflow:hidden; text-overflow:ellipsis}
 .cell-ver code{background:#0b1328; border:1px solid var(--line); padding:2px 6px; border-radius:6px; display:inline-block}
-.text-center{text-align:center}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px}
 .nowrap{white-space:nowrap}
 .badge{padding:3px 8px; border-radius:999px; font-size:12px; color:#fff; display:inline-block}
@@ -170,9 +159,7 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
   <div class="card">
     <form method="get" class="toolbar">
       <div class="filters">
-        <div><label>Search</label>
-          <input type="text" name="q" value="<?=h($q)?>" placeholder="nomor, service, version...">
-        </div>
+        <div><label>Search</label><input type="text" name="q" value="<?=h($q)?>" placeholder="nomor, service, version..."></div>
         <div><label>Server</label>
           <select name="server">
             <option value="">(All)</option>
@@ -207,29 +194,30 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
 
     <div class="table-wrap">
       <table class="table">
-<colgroup>
-  <col style="width:10%">  <!-- Server -->
-  <col style="width:8%">   <!-- Site -->
-  <col style="width:16%">  <!-- Project -->
-  <col style="width:14%">  <!-- Service -->
-  <col style="width:18%">  <!-- Latest Version -->
-  <col style="width:18%">  <!-- New Version -->
-  <col style="width:8%">   <!-- Created -->
-  <col style="width:8%">   <!-- Updated -->
-</colgroup>
+        <colgroup>
+          <col style="width:10%">  <!-- Server -->
+          <col style="width:8%">   <!-- Site -->
+          <col style="width:16%">  <!-- Project -->
+          <col style="width:14%">  <!-- Service -->
+          <col style="width:18%">  <!-- Latest Version -->
+          <col style="width:18%">  <!-- New Version -->
+          <col style="width:8%">   <!-- Created -->
+          <col style="width:8%">   <!-- Updated -->
+        </colgroup>
 
         <thead>
           <tr>
             <?php
-              function th($label,$key,$sort,$dir){
+              function th($label,$key,$sort,$dir,$class=''){
                 $is=($sort===$key); $next=($is && $dir==='ASC')?'desc':'asc'; $arrow=$is?($dir==='ASC'?'▲':'▼'):'';
-                echo '<th><a href="'.h(url_with(['sort'=>$key,'dir'=>$next,'page'=>1])).'">'.h($label).($arrow?' <span class="muted">'.$arrow.'</span>':'').'</a></th>';
+                $cls = $class ? ' class="'.h($class).'"' : '';
+                echo '<th'.$cls.'><a href="'.h(url_with(['sort'=>$key,'dir'=>$next,'page'=>1])).'">'.h($label).($arrow?' <span class="muted">'.$arrow.'</span>':'').'</a></th>';
               }
-              // Nomor Tiket DISembunyikan (tidak dibuat header-nya)
-              th('Server','server',$sort,$dir);
-              th('Site','site',$sort,$dir);
+              // Nomor Tiket disembunyikan
+              th('Server','server',$sort,$dir,'center');
+              th('Site','site',$sort,$dir,'center');
               th('Project','project',$sort,$dir);
-              th('Service','service',$sort,$dir);
+              th('Service','service',$sort,$dir,'center');
               th('Latest Version','latest_version',$sort,$dir);
               th('New Version','new_version',$sort,$dir);
               th('Created','created_at',$sort,$dir);
@@ -243,19 +231,13 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
             <tr><td colspan="8" class="muted">Tidak ada data.</td></tr>
           <?php else: foreach($rows as $r): ?>
             <tr>
-              <!-- Kolom Nomor Tiket DISembunyikan dari tabel -->
-              <td class="mono text-center"><?=h($r['server'])?></td>
-              <td class="text-center"><span class="badge"><?=h($r['site'])?></span></td>
+              <td class="mono center"><?=h($r['server'])?></td>
+              <td class="center"><span class="badge"><?=h($r['site'])?></span></td>
               <td class="mono"><?=h($r['project'])?></td>
-              <td class="text-center"><span class="badge service"><?=h($r['service'])?></span></td>
-
-              <?php
-                $lv = trim((string)$r['latest_version']);
-                $nv = trim((string)$r['new_version']);
-              ?>
-              <td class="cell-ver"><?= $lv === '' ? '<span class="muted">—</span>' : '<span title="'.h($lv).'"><code class="mono">'.h($lv).'</code></span>' ?></td>
-              <td class="cell-ver"><?= $nv === '' ? '<span class="muted">—</span>' : '<span title="'.h($nv).'"><code class="mono">'.h($nv).'</code></span>' ?></td>
-
+              <td class="center"><span class="badge service"><?=h($r['service'])?></span></td>
+              <?php $lv=trim((string)$r['latest_version']); $nv=trim((string)$r['new_version']); ?>
+              <td class="cell-ver"><?= $lv==='' ? '<span class="muted">—</span>' : '<span title="'.h($lv).'"><code class="mono">'.h($lv).'</code></span>' ?></td>
+              <td class="cell-ver"><?= $nv==='' ? '<span class="muted">—</span>' : '<span title="'.h($nv).'"><code class="mono">'.h($nv).'</code></span>' ?></td>
               <td class="mono nowrap"><?=h($r['created_at'])?></td>
               <td class="mono nowrap"><?=h($r['updated_at'])?></td>
             </tr>
@@ -286,8 +268,7 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
 <script>
 (() => {
   const parser = new DOMParser();
-  let lastSwapAt = 0;
-  let isSwapping = false;
+  let lastSwapAt = 0, isSwapping = false;
 
   async function softRefresh() {
     if (document.hidden || isSwapping) return;
@@ -303,7 +284,6 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
       const oldPager = document.querySelector('.pager');
       if (!newTbody || !oldTbody) return;
 
-      // highlight baris baru sederhana (pakai nilai pertama yang kini 'Server')
       const oldKeys = new Set([...oldTbody.querySelectorAll('tr')].map(tr => (tr.cells[0]?.textContent || '').trim()));
       oldTbody.replaceWith(newTbody);
       newTbody.querySelectorAll('tr').forEach(tr => {
@@ -313,25 +293,15 @@ input,select{width:100%; padding:9px 10px; border-radius:10px; border:1px solid 
 
       if (newPager && oldPager) oldPager.replaceWith(newPager);
       lastSwapAt = Date.now();
-    } catch (e) {
-      /* no-op */
-    } finally {
-      isSwapping = false;
-    }
+    } catch (e) {} finally { isSwapping = false; }
   }
 
-  // Polling fallback
   setInterval(() => {
-    if (document.hidden) return;
-    if (Date.now() - lastSwapAt < 3000) return;
-    softRefresh();
+    if (!document.hidden && Date.now() - lastSwapAt >= 3000) softRefresh();
   }, 5000);
 
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) softRefresh();
-  });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) softRefresh(); });
 })();
 </script>
 </body>
 </html>
-

@@ -13,13 +13,16 @@ if (!hash_equals($VALID_TOKEN, $hdrToken)) {
   echo json_encode(['code'=>'FORBIDDEN','error'=>'invalid token']); exit;
 }
 
-// ===== DB conn =====
-$DB_HOST = getenv('DB_HOST') ?: '127.0.0.1';
+DB_HOST = getenv('DB_HOST') ?: 'db';
 $DB_PORT = getenv('DB_PORT') ?: '3306';
 $DB_NAME = getenv('DB_NAME') ?: 'deploymentecal';
 $DB_USER = getenv('DB_USER') ?: 'deployuser';
 $DB_PASS = getenv('DB_PASS') ?: 'secret';
+
 $dsn = "mysql:host={$DB_HOST};port={$DB_PORT};dbname={$DB_NAME};charset=utf8mb4";
+date_default_timezone_set('Asia/Jakarta');
+function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES|ENT_SUBSTITUTE, 'UTF-8'); }
+
 
 try {
   $pdo = new PDO($dsn,$DB_USER,$DB_PASS,[

@@ -115,7 +115,7 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
 
 /* TABLE (dense & stabil) */
 .table-wrap{overflow:auto; border-radius:10px; margin-top:8px}
-.table{ width:100%; min-width:1320px; border-collapse:separate; border-spacing:0; table-layout:fixed; }
+.table{ width:auto; min-width:1100px; border-collapse:separate; border-spacing:0; table-layout:fixed; }
 .table th,.table td{
   padding:6px 8px; border-bottom:1px solid var(--line);
   vertical-align:middle; font-size:13px; line-height:1.2;
@@ -188,18 +188,19 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
     <div class="table-wrap">
       <table class="table">
         <!-- lebar pasti per kolom agar tidak “loncat” -->
-        <colgroup>
-          <col style="width:110px">  <!-- Server -->
-          <col style="width:80px">   <!-- Site -->
-          <col style="width:220px">  <!-- Project -->
-          <col style="width:160px">  <!-- Service -->
-          <col style="width:210px">  <!-- Latest -->
-          <col style="width:210px">  <!-- New -->
-          <col style="width:170px">  <!-- CREATOR (git_author) -->
-          <col style="width:120px">  <!-- GIT HASH (git_short) -->
-          <col style="width:260px">  <!-- CHANGELOG (git_title) -->
-          <col style="width:160px">  <!-- Created -->
-        </colgroup>
+<colgroup>
+  <col style="width:90px">   <!-- Server -->
+  <col style="width:64px">   <!-- Site -->
+  <col style="width:150px">  <!-- Project -->
+  <col style="width:130px">  <!-- Service -->
+  <col style="width:160px">  <!-- Latest -->
+  <col style="width:160px">  <!-- New -->
+  <col style="width:110px">  <!-- CREATOR (git_author) -->
+  <col style="width:88px">   <!-- GIT HASH (git_short) -->
+  <col style="width:190px">  <!-- CHANGELOG (git_title) -->
+  <col style="width:135px">  <!-- Created -->
+</colgroup>
+
         <thead>
           <tr>
             <?php

@@ -297,7 +297,7 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
               th('New Version','new_version',$sort,$dir,'center');
 
               /* header baru */
-              th('Creator','git_author',$sort,$dir,'right');
+              th('Creator','git_author',$sort,$dir,'center');
               th('Git Hash','git_short',$sort,$dir,'center');
               th('Changelog','git_title',$sort,$dir,'left');
 

@@ -373,6 +373,56 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
 })();
 </script>
 
+<script>
+/* === Auto-apply filters tanpa tombol Terapkan === */
+(function () {
+  'use strict';
+  const form = document.querySelector('form.toolbar');
+  if (!form) return;
+
+  const inputs = form.querySelectorAll('input, select');
+
+  // debounce biar nggak reload terus saat ngetik
+  const debounce = (fn, ms = 350) => {
+    let t; 
+    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+  };
+
+  function applyFilters(resetPage = true) {
+    const url = new URL(location.href);
+    const fd  = new FormData(form);
+
+    // Pertahankan param lain (sort/dir, dll), override dengan nilai form
+    // Kosong -> hapus paramnya agar dianggap (All)
+    fd.forEach((v, k) => {
+      if (v === '' || v == null) url.searchParams.delete(k);
+      else url.searchParams.set(k, v);
+    });
+
+    if (resetPage) url.searchParams.set('page', '1'); // balik ke halaman 1 tiap ganti filter
+    // Hindari duplikasi ? di url
+    location.href = url.toString();
+  }
+
+  const trigger = debounce(() => applyFilters(true), 350);
+
+  inputs.forEach(el => {
+    // text/date gunakan 'input' (live), select gunakan 'change'
+    const isTextLike = el.tagName === 'INPUT' && (el.type === 'text' || el.type === 'search' || el.type === 'date');
+    el.addEventListener(isTextLike ? 'input' : 'change', trigger);
+  });
+
+  // Tekan Enter di field search -> langsung apply (tanpa submit default)
+  const q = form.querySelector('input[name="q"]');
+  if (q) {
+    q.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); applyFilters(true); }
+      if (e.key === 'Escape') { q.value = ''; trigger(); } // ESC buat clear cepat
+    });
+  }
+})();
+</script>
+
 
 </body>
 </html>

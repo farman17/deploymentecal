@@ -94,6 +94,23 @@ function badge($text){
   $bg=$colors[$text] ?? '#0ea5e9';
   return '<span class=\"badge\" style=\"background:'.$bg.'\">'.h($text).'</span>';
 }
+
+function id_tanggal($ts){
+  try {
+    $dt = new DateTime($ts, new DateTimeZone('Asia/Jakarta'));
+  } catch (Throwable $e) {
+    return (string)$ts; // fallback jika format tak terduga
+  }
+  if (class_exists('IntlDateFormatter')) {
+    $fmt = new IntlDateFormatter('id_ID', IntlDateFormatter::NONE, IntlDateFormatter::NONE,
+                                 'Asia/Jakarta', IntlDateFormatter::GREGORIAN, 'd MMMM y');
+    return $fmt->format($dt);
+  }
+  // fallback manual jika ekstensi intl tidak tersedia
+  static $bulan = [1=>'Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  return (int)$dt->format('j').' '.$bulan[(int)$dt->format('n')].' '.$dt->format('Y');
+}
+
 ?>
 <!doctype html><html lang="id"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">

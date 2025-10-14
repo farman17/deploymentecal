@@ -312,7 +312,8 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
               <td class="center"><code class="mono" title="<?=h($r['git_short'])?>"><?=h($r['git_short'])?></code></td>
               <td class="left" title="<?=h($r['git_title'])?>"><?=h($r['git_title'])?></td>
 
-              <td class="mono left"><?=h($r['created_at'])?></td>
+              <td class="mono left"><?=h(id_tanggal($r['created_at']))?></td>
+
             </tr>
           <?php endforeach; endif; ?>
         </tbody>

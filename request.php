@@ -402,10 +402,11 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
   let pageInput = form.querySelector('input[name="page"]');
   if(!pageInput){ pageInput = document.createElement('input'); pageInput.type='hidden'; pageInput.name='page'; pageInput.value='1'; form.appendChild(pageInput); }
 
-  function submitNow(){
-    pageInput.value = '1'; // setiap filter berubah -> kembali ke halaman 1
-    if(form.requestSubmit) form.requestSubmit(); else form.submit();
-  }
+function submitNow(){
+  pageInput.value = '1';    // reset ke halaman 1
+  form.submit();            // langsung submit, tanpa requestSubmit
+}
+  
 
   // debounce cepat
   const debounce = (fn, ms) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn.apply(null,a), ms); }; };

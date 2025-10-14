@@ -326,7 +326,7 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
               </td>
 
               <!-- kolom baru -->
-              <td class="right mono" title="<?=h($r['git_author'])?>"><?=h($r['git_author'])?></td>
+              <td class="center mono" title="<?=h($r['git_author'])?>"><?=h($r['git_author'])?></td>
               <td class="center"><code class="mono" title="<?=h($r['git_short'])?>"><?=h($r['git_short'])?></code></td>
               <td class="left" title="<?=h($r['git_title'])?>"><?=h($r['git_title'])?></td>
 

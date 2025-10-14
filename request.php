@@ -160,7 +160,36 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
 }
 #now{ font-variant-numeric: tabular-nums; letter-spacing: .2px; }
 
-.foot{margin:18px 0 6px;text-align:center;color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padding-top:10px}
+/* footer cantik */
+.foot{
+  position: relative;
+  margin: 18px 0 10px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 12.8px;
+  padding-top: 14px;                 /* ruang untuk garis gradasi */
+}
+.foot::before{
+  content: "";
+  position: absolute; left: 12%; right: 12%; top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #3b82f6 25%, #10b981 75%, transparent);
+  opacity: .7;
+}
+.foot-chip{
+  display: inline-block;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255,255,255,.02);
+  backdrop-filter: blur(2px);
+  letter-spacing: .2px;
+}
+.foot-chip::before{
+  content: "⚙️";
+  margin-right: 8px;
+  opacity: .9;
+}
 
 </style>
 
@@ -305,7 +334,7 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
   </div>
 </div>
 
-<footer class="foot">operated by DevOps BVK 2025</footer>
+<footer class="foot"><span class="foot-chip">created by DevOps BVK 2025</span></footer>
 
 <script>
 (function(){

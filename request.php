@@ -195,7 +195,7 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
   <col style="width:130px">  <!-- Service -->
   <col style="width:160px">  <!-- Latest -->
   <col style="width:160px">  <!-- New -->
-  <col style="width:110px">  <!-- CREATOR (git_author) -->
+  <col style="width:190px">  <!-- CREATOR (git_author) -->
   <col style="width:120px">   <!-- GIT HASH (git_short) -->
   <col style="width:190px">  <!-- CHANGELOG (git_title) -->
   <col style="width:135px">  <!-- Created -->

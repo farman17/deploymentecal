@@ -117,11 +117,8 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
 .table-wrap{overflow:auto; border-radius:10px; margin-top:8px}
 .table{ width:100%; min-width:1320px; border-collapse:separate; border-spacing:0; table-layout:fixed; }
 .table th,.table td{
-  padding:3px 8px;              /* semula 6px 8px -> dirapetin */
-  border-bottom:1px solid var(--line);
-  vertical-align:middle;
-  font-size:12.5px;             /* semula 13px */
-  line-height:1.05;             /* semula 1.2 */
+  padding:6px 8px; border-bottom:1px solid var(--line);
+  vertical-align:middle; font-size:13px; line-height:1.2;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 .table thead th{ font-weight:600; position:sticky; top:0; z-index:1; background:var(--card); }
@@ -131,18 +128,17 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
 .table tbody tr:hover{background:rgba(59,130,246,.06)}
 .center{text-align:center}
 .left{text-align:left}
-.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.2px} /* semula 11.5px */
-.badge{padding:1px 6px; border-radius:999px; font-size:11px; color:#fff; display:inline-block} /* semula 2px 6px & 11.5px */
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px}
+.badge{padding:2px 6px; border-radius:999px; font-size:11.5px; color:#fff; display:inline-block}
 .badge.service{background:#424242}
 
 .ver{text-align:center}
 .ver .chip{display:inline-block; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle}
-.ver .chip code{background:#0b1328; border:1px solid var(--line); padding:0 4px; border-radius:5px; display:inline-block} /* semula 1px 5px */
+.ver .chip code{background:#0b1328; border:1px solid var(--line); padding:1px 5px; border-radius:5px; display:inline-block}
 
 .pager{display:flex; gap:6px; align-items:center; justify-content:flex-end; margin-top:10px}
 .num{padding:5px 9px; border-radius:7px; border:1px solid var(--line); background:#0b1328}
 </style>
-
 
 
 </head>

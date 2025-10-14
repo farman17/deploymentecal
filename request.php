@@ -209,6 +209,24 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
   opacity: .9;
 }
 
+/* === Search beautify (ikon + pill + fokus glow) === */
+.filters > div:first-child{ position: relative; }
+.filters > div:first-child input[name="q"]{
+  padding-left: 34px;                 /* ruang buat ikon */
+  border-radius: 999px;               /* pill */
+  transition: box-shadow .12s, border-color .12s;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="%239ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>');
+  background-repeat: no-repeat;
+  background-position: 10px 50%;
+  background-size: 16px;
+}
+.filters > div:first-child input[name="q"]:focus{
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59,130,246,.45), 0 0 0 5px rgba(16,185,129,.12);
+}
+.filters > div:first-child input[name="q"]::placeholder{ color:#9ca3af; opacity:.9; }
+
+
 </style>
 
 
@@ -227,6 +245,9 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
   <div class="card">
     <form method="get" class="toolbar">
       <div class="filters">
+        <input type="hidden" name="page" value="1">
+<input type="hidden" name="sort" value="<?=h($sort)?>">
+<input type="hidden" name="dir"  value="<?=h(strtolower($dir)==='asc'?'asc':'desc')?>">
         <div><label>Search</label><input type="text" name="q" value="<?=h($q)?>" placeholder="nomor, service, version..."></div>
         <div><label>Server</label>
           <select name="server">
@@ -253,7 +274,6 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
           </select>
         </div>
         <div style="display:flex; gap:8px; align-items:center">
-          <button class="btn primary" type="submit">Terapkan</button>
           <a class="btn" href="requests.php">Reset</a>
           <a class="btn" href="<?=h(url_with(['export'=>'csv']))?>">Ekspor CSV</a>
         </div>
@@ -374,54 +394,42 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
 </script>
 
 <script>
-/* === Auto-apply filters tanpa tombol Terapkan === */
-(function () {
-  'use strict';
+(function(){
   const form = document.querySelector('form.toolbar');
-  if (!form) return;
+  if(!form) return;
 
-  const inputs = form.querySelectorAll('input, select');
+  // pastikan hidden 'page' ada
+  let pageInput = form.querySelector('input[name="page"]');
+  if(!pageInput){ pageInput = document.createElement('input'); pageInput.type='hidden'; pageInput.name='page'; pageInput.value='1'; form.appendChild(pageInput); }
 
-  // debounce biar nggak reload terus saat ngetik
-  const debounce = (fn, ms = 350) => {
-    let t; 
-    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
-  };
-
-  function applyFilters(resetPage = true) {
-    const url = new URL(location.href);
-    const fd  = new FormData(form);
-
-    // Pertahankan param lain (sort/dir, dll), override dengan nilai form
-    // Kosong -> hapus paramnya agar dianggap (All)
-    fd.forEach((v, k) => {
-      if (v === '' || v == null) url.searchParams.delete(k);
-      else url.searchParams.set(k, v);
-    });
-
-    if (resetPage) url.searchParams.set('page', '1'); // balik ke halaman 1 tiap ganti filter
-    // Hindari duplikasi ? di url
-    location.href = url.toString();
+  function submitNow(){
+    pageInput.value = '1'; // setiap filter berubah -> kembali ke halaman 1
+    if(form.requestSubmit) form.requestSubmit(); else form.submit();
   }
 
-  const trigger = debounce(() => applyFilters(true), 350);
+  // debounce cepat
+  const debounce = (fn, ms) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn.apply(null,a), ms); }; };
+  const submitFast = debounce(submitNow, 80);   // saat kosongkan / hapus cepat
+  const submitQuick= debounce(submitNow, 120);  // ngetik normal
 
-  inputs.forEach(el => {
-    // text/date gunakan 'input' (live), select gunakan 'change'
-    const isTextLike = el.tagName === 'INPUT' && (el.type === 'text' || el.type === 'search' || el.type === 'date');
-    el.addEventListener(isTextLike ? 'input' : 'change', trigger);
+  // SEARCH: responsif saat ngetik panjang
+  const q = form.querySelector('[name="q"]');
+  if(q){
+    q.addEventListener('input', () => {
+      const len = q.value.trim().length;
+      (len <= 2 ? submitFast : submitQuick)();   // <3 karakter -> lebih cepat
+    });
+    q.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); submitNow(); }});
+  }
+
+  // SELECT/DATE/PER PAGE: langsung submit saat berubah
+  ['server','project','from','to','pp'].forEach(name=>{
+    const el = form.querySelector(`[name="${name}"]`);
+    if(el) el.addEventListener('change', submitNow);
   });
-
-  // Tekan Enter di field search -> langsung apply (tanpa submit default)
-  const q = form.querySelector('input[name="q"]');
-  if (q) {
-    q.addEventListener('keydown', e => {
-      if (e.key === 'Enter') { e.preventDefault(); applyFilters(true); }
-      if (e.key === 'Escape') { q.value = ''; trigger(); } // ESC buat clear cepat
-    });
-  }
 })();
 </script>
+
 
 
 </body>

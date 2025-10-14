@@ -286,4 +286,27 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
     </div>
   </div>
 </div>
-</body></html>
+
+<footer class="foot">created by DevOps BVK 2025</footer>
+
+<script>
+(function(){
+  const el = document.getElementById('now');
+  if(!el) return;
+  function tick(){
+    const now = new Date();
+    // tampilkan waktu WIB secara konsisten
+    el.textContent = new Intl.DateTimeFormat('id-ID',{
+      weekday:'long', year:'numeric', month:'long', day:'numeric',
+      hour:'2-digit', minute:'2-digit', second:'2-digit',
+      hour12:false, timeZone:'Asia/Jakarta'
+    }).format(now) + ' WIB';
+  }
+  tick();
+  setInterval(tick, 1000);
+})();
+</script>
+
+
+</body>
+</html>

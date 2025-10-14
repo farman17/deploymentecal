@@ -140,8 +140,26 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
 .num{padding:5px 9px; border-radius:7px; border:1px solid var(--line); background:#0b1328}
 
 /* subheader waktu & footer */
-.subhead{margin-top:4px;color:var(--muted);font-size:12.5px;display:flex;align-items:center;gap:8px}
-.subhead .dot{width:6px;height:6px;border-radius:999px;background:#10b981;box-shadow:0 0 8px rgba(16,185,129,.9)}
+/* subheader waktu — dibuat lebih lega & manis */
+.subhead{
+  margin: 8px 0 14px;        /* tambah jarak atas & bawah */
+  padding: 6px 10px;         /* beri ruang di dalam */
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;                  /* jarak titik hijau ↔ teks */
+  color: var(--muted);
+  font-size: 12.8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255,255,255,.02);
+}
+.subhead .dot{
+  width: 8px; height: 8px; border-radius: 999px;
+  background: #10b981;
+  box-shadow: 0 0 10px rgba(16,185,129,.9);
+}
+#now{ font-variant-numeric: tabular-nums; letter-spacing: .2px; }
+
 .foot{margin:18px 0 6px;text-align:center;color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padding-top:10px}
 
 </style>
@@ -154,7 +172,7 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
     DevOps Deploy Monitoring
     <span class="mono" style="color:var(--muted)">— <?=h(number_format($total))?> entri</span>
   </h2>
-  <div class="subhead">
+<div class="subhead">
   <span class="dot"></span>
   <span id="now">Memuat waktu…</span>
 </div>
@@ -287,7 +305,7 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
   </div>
 </div>
 
-<footer class="foot">created by DevOps BVK 2025</footer>
+<footer class="foot">operated by DevOps BVK 2025</footer>
 
 <script>
 (function(){

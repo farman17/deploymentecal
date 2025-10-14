@@ -145,6 +145,7 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
 .table tbody tr:hover{background:rgba(59,130,246,.06)}
 .center{text-align:center}
 .left{text-align:left}
+.right{ text-align:right; }
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px}
 .badge{padding:2px 6px; border-radius:999px; font-size:11.5px; color:#fff; display:inline-block}
 .badge.service{background:#424242}
@@ -296,7 +297,7 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
               th('New Version','new_version',$sort,$dir,'center');
 
               /* header baru */
-              th('Creator','git_author',$sort,$dir,'left');
+              th('Creator','git_author',$sort,$dir,'right');
               th('Git Hash','git_short',$sort,$dir,'center');
               th('Changelog','git_title',$sort,$dir,'left');
 
@@ -325,7 +326,7 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
               </td>
 
               <!-- kolom baru -->
-              <td class="left mono" title="<?=h($r['git_author'])?>"><?=h($r['git_author'])?></td>
+              <td class="right mono" title="<?=h($r['git_author'])?>"><?=h($r['git_author'])?></td>
               <td class="center"><code class="mono" title="<?=h($r['git_short'])?>"><?=h($r['git_short'])?></code></td>
               <td class="left" title="<?=h($r['git_title'])?>"><?=h($r['git_title'])?></td>
 
@@ -352,7 +353,7 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
   </div>
 </div>
 
-<footer class="foot"><span class="foot-chip">created by DevOps BVK 2025</span></footer>
+<footer class="foot"><span class="foot-chip">Operated by DevOps BVK 2025</span></footer>
 
 <script>
 (function(){

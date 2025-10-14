@@ -192,7 +192,7 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
   <col style="width:90px">   <!-- Server -->
   <col style="width:64px">   <!-- Site -->
   <col style="width:150px">  <!-- Project -->
-  <col style="width:110px">  <!-- Service -->
+  <col style="width:130px">  <!-- Service -->
   <col style="width:160px">  <!-- Latest -->
   <col style="width:160px">  <!-- New -->
   <col style="width:110px">  <!-- CREATOR (git_author) -->

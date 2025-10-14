@@ -431,6 +431,51 @@ function submitNow(){
 })();
 </script>
 
+<script>
+/* ==== Auto refresh setiap 5 detik ====
+   - Men-submit form dengan nilai filter/sort saat ini
+   - TIDAK mereset halaman (page tetap)
+   - Pause saat user fokus di input/select atau tab tidak aktif
+*/
+(function () {
+  const form = document.querySelector('form.toolbar');
+  if (!form) return;
+
+  const REFRESH_MS = 5000;
+  let timer;
+
+  function refreshNow() {
+    // jangan refresh kalau tab disembunyikan
+    if (document.hidden) return;
+
+    // jangan refresh ketika user sedang interaksi di area filter
+    const ae = document.activeElement;
+    if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'SELECT')) return;
+
+    // submit GET dengan nilai form saat ini (tidak utak-atik 'page')
+    form.submit();
+  }
+
+  function start() { stop(); timer = setInterval(refreshNow, REFRESH_MS); }
+  function stop()  { if (timer) clearInterval(timer); }
+
+  // pause saat mouse/focus berada di filter; lanjut lagi saat keluar
+  const filters = document.querySelector('.filters');
+  if (filters) {
+    filters.addEventListener('mouseenter', stop);
+    filters.addEventListener('mouseleave', start);
+    filters.addEventListener('focusin',  stop);
+    filters.addEventListener('focusout', start);
+  }
+
+  // pause kalau tab tidak aktif
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stop(); else start();
+  });
+
+  start();
+})();
+</script>
 
 
 </body>

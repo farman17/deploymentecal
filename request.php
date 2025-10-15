@@ -9,6 +9,15 @@ $DB_PASS = getenv('DB_PASS') ?: 'secret';
 
 $dsn = "mysql:host={$DB_HOST};port={$DB_PORT};dbname={$DB_NAME};charset=utf8mb4";
 date_default_timezone_set('Asia/Jakarta');
+
+// Nonaktifkan cache agar refresh selalu ambil data terbaru
+if (!headers_sent()) {
+  header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+  header('Pragma: no-cache');
+  header('Expires: 0');
+}
+
+
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES|ENT_SUBSTITUTE, 'UTF-8'); }
 
 $q       = trim($_GET['q'] ?? '');
@@ -95,6 +104,11 @@ function badge($text){
   return '<span class=\"badge\" style=\"background:'.$bg.'\">'.h($text).'</span>';
 }
 
+function badge_site($text){
+  return '<span class="badge site">'.h($text).'</span>';
+}
+
+
 function id_tanggal($ts){
   try {
     $dt = new DateTime($ts, new DateTimeZone('Asia/Jakarta'));
@@ -149,6 +163,8 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px}
 .badge{padding:2px 6px; border-radius:999px; font-size:11.5px; color:#fff; display:inline-block}
 .badge.service{background:#424242}
+/* badge hijau untuk kolom Site */
+.badge.site{ background:#10b981; } /* emerald */
 
 .ver{text-align:center}
 .ver .chip{display:inline-block; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle}

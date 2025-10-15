@@ -348,7 +348,7 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
           <?php else: foreach($rows as $r): ?>
             <tr>
               <td class="mono center"><?=h($r['server'])?></td>
-              <td class="center"><?=badge($r['site'])?></td>
+              <td class="center"><?=badge_site($r['site'])?></td>
               <td class="mono left" title="<?=h($r['project'])?>"><?=h($r['project'])?></td>
               <td class="center"><span class="badge service" title="<?=h($r['service'])?>"><?=h($r['service'])?></span></td>
               <?php $lv=trim((string)$r['latest_version']); $nv=trim((string)$r['new_version']); ?>

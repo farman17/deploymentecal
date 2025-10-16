@@ -280,6 +280,28 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
   filter:brightness(.97);
 }
 
+/*---------------------------------------------*/
+/* ==== Tipografi area filter lebih kecil ==== */
+.filters label{
+  font-size: 10.5px;            /* sebelumnya 11.5px */
+  letter-spacing: .2px;
+}
+
+.filters input,
+.filters select{
+  font-size: 12px;              /* sebelumnya 13px */
+}
+
+.filters input::placeholder{
+  font-size: 12px;
+}
+
+/* (opsional) samakan ukuran font tombol di bar filter */
+.filters .btn{
+  font-size: 12px;
+}
+
+
 </style>
 
 

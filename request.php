@@ -517,7 +517,7 @@ function submitNow(){
   const form = document.querySelector('form.toolbar');
   if (!form) return;
 
-  const REFRESH_MS = 5000;
+  const REFRESH_MS = 300000;
   let timer;
 
   function refreshNow() {

@@ -138,7 +138,10 @@ a{color:var(--accent2); text-decoration:none}
 .wrap{max-width:1680px; margin:20px auto; padding:0 20px}
 .card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px}
 .toolbar{display:grid; grid-template-columns:1fr auto; gap:10px; align-items:end}
-.filters{display:grid; grid-template-columns:repeat(7,1fr); gap:6px}
+
+/* bar filter: semua item dirapatkan ke bawah agar sejajar */
+.filters{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; align-items:end}
+
 label{font-size:11.5px; color:var(--muted)}
 input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid var(--line); background:#0b1328; color:var(--fg); font-size:13px}
 .btn{display:inline-block; padding:8px 12px; border-radius:8px; border:1px solid var(--line); background:#0b1328; color:var(--fg); cursor:pointer; font-size:13px}

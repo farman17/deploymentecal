@@ -289,10 +289,11 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
             <?php endforeach; ?>
           </select>
         </div>
-        <div style="display:flex; gap:8px; align-items:center">
-          <a class="btn" href="requests.php">Reset</a>
-          <a class="btn" href="<?=h(url_with(['export'=>'csv']))?>">Ekspor CSV</a>
-        </div>
+<div style="display:flex; gap:8px; align-items:center">
+  <button type="button" class="btn" id="refreshBtn" title="Refresh (R)">Refresh</button>
+  <a class="btn" href="<?=h(url_with(['export'=>'csv']))?>">Ekspor CSV</a>
+</div>
+
       </div>
     </form>
 
@@ -493,6 +494,31 @@ function submitNow(){
 })();
 </script>
 
+<script>
+(function(){
+  const btn = document.getElementById('refreshBtn');
+  if(!btn) return;
+
+  // Refresh halaman, mempertahankan query string/filter saat ini.
+  btn.addEventListener('click', () => {
+    // Header no-store sudah diset, jadi reload akan ambil data terbaru.
+    if (typeof window.location.reload === 'function') {
+      window.location.reload();
+    } else {
+      window.location.href = window.location.href;
+    }
+  });
+
+  // Shortcut: tekan "R" (saat tidak fokus di input/select/textarea)
+  document.addEventListener('keydown', (e) => {
+    const t = e.target && e.target.tagName;
+    if ((e.key === 'r' || e.key === 'R') && t && !/INPUT|SELECT|TEXTAREA/.test(t)) {
+      e.preventDefault();
+      btn.click();
+    }
+  });
+})();
+</script>
 
 </body>
 </html>

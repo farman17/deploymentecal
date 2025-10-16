@@ -144,7 +144,7 @@ a{color:var(--accent2); text-decoration:none}
 
 label{font-size:11.5px; color:var(--muted)}
 input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid var(--line); background:#0b1328; color:var(--fg); font-size:13px}
-.btn{display:inline-block; padding:8px 12px; border-radius:8px; border:1px solid var(--line); background:#0b1328; color:var(--fg); cursor:pointer; font-size:13px}
+.btn{display:inline-flex; padding:7px 12px; border-radius:8px; border:1px solid var(--line); background:#0b1328; color:var(--fg); cursor:pointer; font-size:13px}
 .btn.primary{background:linear-gradient(135deg,#2563eb,#10b981); border:none}
 
 /* TABLE (dense & stabil) */
@@ -244,6 +244,14 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
   box-shadow: 0 0 0 2px rgba(59,130,246,.45), 0 0 0 5px rgba(16,185,129,.12);
 }
 .filters > div:first-child input[name="q"]::placeholder{ color:#9ca3af; opacity:.9; }
+
+/* sel terakhir (tombol-tombol) ikut nempel bawah */
+.filters > div:last-child{
+  align-self:end;
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
 
 
 </style>

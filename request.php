@@ -403,34 +403,31 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
         </thead>
 
         <tbody>
-          <?php if(!$rows): ?>
-            <tr><td colspan="10" class="mono" style="color:#9ca3af; text-align:center">Tidak ada data.</td></tr>
-          <?php else: foreach($rows as $r): ?>
-            <tr>
-              <td class="mono center"><?=h($r['server'])?></td>
-              <td class="center"><?=badge_site($r['site'])?></td>
-              <td class="mono left" title="<?=h($r['project'])?>"><?=h($r['project'])?></td>
-              <td class="center"><span class="badge service" title="<?=h($r['service'])?>"><?=h($r['service'])?></span></td>
-              <?php $lv=trim((string)$r['latest_version']); $nv=trim((string)$r['new_version']); ?>
-              <td class="ver">
-                <?= $lv==='' ? '<span style="color:#9ca3af">—</span>'
-                              : '<span class="chip" title="'.h($lv).'"><code class="mono">'.h($lv).'</code></span>' ?>
-              </td>
-              <td class="ver">
-                <?= $nv==='' ? '<span style="color:#9ca3af">—</span>'
-                              : '<span class="chip" title="'.h($nv).'"><code class="mono">'.h($nv).'</code></span>' ?>
-              </td>
+  <?php if(!$rows): ?>
+    <tr><td colspan="10" class="mono" style="color:#9ca3af; text-align:center">Tidak ada data.</td></tr>
+  <?php else: ?>
+    <?php $prevDay = null; ?>
+    <?php foreach($rows as $r): ?>
+      <tr>
+        <!-- kolom lain tetap -->
+        ...
+        <?php
+          try { $dayKey = (new DateTime($r['created_at']))->format('Y-m-d'); }
+          catch (Throwable $e) { $dayKey = (string)$r['created_at']; }
+          if ($dayKey === $prevDay) {
+            $createdDisp = '';
+          } else {
+            $createdDisp = id_tanggal($r['created_at']);
+            $prevDay = $dayKey;
+          }
+        ?>
+        <td class="mono left"><?= $createdDisp === '' ? '' : h($createdDisp) ?></td>
+      </tr>
+    <?php endforeach; ?>
+  <?php endif; ?>
+</tbody>
 
-              <!-- kolom baru -->
-              <td class="center mono" title="<?=h($r['git_author'])?>"><?=h($r['git_author'])?></td>
-              <td class="center"><code class="mono" title="<?=h($r['git_short'])?>"><?=h($r['git_short'])?></code></td>
-              <td class="left" title="<?=h($r['git_title'])?>"><?=h($r['git_title'])?></td>
 
-              <td class="mono left"><?=h(id_tanggal($r['created_at']))?></td>
-
-            </tr>
-          <?php endforeach; endif; ?>
-        </tbody>
       </table>
     </div>
 

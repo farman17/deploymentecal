@@ -497,28 +497,30 @@ function submitNow(){
 <script>
 (function(){
   const btn = document.getElementById('refreshBtn');
-  if(!btn) return;
+  if (!btn) return;
 
-  // Refresh halaman, mempertahankan query string/filter saat ini.
-  btn.addEventListener('click', () => {
-    // Header no-store sudah diset, jadi reload akan ambil data terbaru.
-    if (typeof window.location.reload === 'function') {
-      window.location.reload();
-    } else {
-      window.location.href = window.location.href;
-    }
-  });
+  // Clear semua filter: arahkan ke URL dasar tanpa query/hash.
+  function clearFilters() {
+    // contoh: dari /request.php?q=..&server=.. -> ke /request.php
+    const basePath = window.location.pathname; 
+    // replace agar tidak menumpuk histori ketika clear
+    window.location.replace(basePath);
+  }
 
-  // Shortcut: tekan "R" (saat tidak fokus di input/select/textarea)
+  // Klik tombol Refresh => clear semua filter
+  btn.addEventListener('click', clearFilters);
+
+  // Shortcut: tekan "R" saat tidak fokus di input/select/textarea => clear juga
   document.addEventListener('keydown', (e) => {
-    const t = e.target && e.target.tagName;
-    if ((e.key === 'r' || e.key === 'R') && t && !/INPUT|SELECT|TEXTAREA/.test(t)) {
+    const tag = (e.target && e.target.tagName) || '';
+    if ((e.key === 'r' || e.key === 'R') && !/INPUT|SELECT|TEXTAREA/.test(tag)) {
       e.preventDefault();
-      btn.click();
+      clearFilters();
     }
   });
 })();
 </script>
+
 
 </body>
 </html>

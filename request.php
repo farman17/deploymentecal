@@ -263,6 +263,23 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
   filter:brightness(.98);
 }
 
+
+
+/* Tombol EKSPOR CSV (tombol terakhir) — biru outline */
+.filters > div:last-child .btn:last-child{
+  background:transparent;
+  border-color:#2563eb;
+  color:#93c5fd;
+  box-shadow:0 0 0 1px rgba(37,99,235,.25) inset;
+}
+.filters > div:last-child .btn:last-child:hover{
+  background:rgba(59,130,246,.12);
+  box-shadow:0 0 0 2px rgba(59,130,246,.35) inset;
+}
+.filters > div:last-child .btn:last-child:active{
+  filter:brightness(.97);
+}
+
 </style>
 
 

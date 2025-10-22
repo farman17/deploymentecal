@@ -339,7 +339,7 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
     <form method="get" class="toolbar">
       <div class="filters">
         <input type="hidden" name="page" value="1">
-<input type="hidden" name="sort" value="<?=h($sort)\?>">
+<input type="hidden" name="sort" value="<?=h($sort)?>">
 <input type="hidden" name="dir"  value="<?=h(strtolower($dir)==='asc'?'asc':'desc')?>">
         <div><label>Search</label><input type="text" name="q" value="<?=h($q)?>" placeholder="nomor, service, version..."></div>
         <div><label>Server</label>

@@ -339,14 +339,6 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
             <?php endforeach; ?>
           </select>
         </div>
-                <div><label>Service</label>
-          <select name="project">
-            <option value="">(All)</option>
-            <?php foreach(['user-service','BACK-OFFICE-JAVA','WEB-EMR','PDF-GENERATOR'] as $p): ?>
-              <option value="<?=$p?>" <?=$project===$p?'selected':''?>><?=$p?></option>
-            <?php endforeach; ?>
-          </select>
-        </div>
 
         <div><label>Dari Tanggal</label><input type="date" name="from" value="<?=h($from)?>"></div>
         <div><label>Sampai Tanggal</label><input type="date" name="to" value="<?=h($to)?>"></div>

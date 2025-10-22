@@ -31,6 +31,8 @@ $perPage = min(max((int)($_GET['pp'] ?? 20), 5), 200);
 $sort    = $_GET['sort'] ?? 'created_at';
 $dir     = strtolower($_GET['dir'] ?? 'desc') === 'asc' ? 'ASC' : 'DESC';
 $export  = $_GET['export'] ?? '';
+
+/* NEW: filter service (penambahan variabel GET, tidak mengubah variabel yang ada) */
 $service = trim($_GET['service'] ?? '');
 
 /* tambahkan field baru ke daftar yang bisa disort */
@@ -52,6 +54,10 @@ if($q!==''){
 if($server!==''){ $where[]="server = :srv"; $params[':srv']=$server; }
 if($project!==''){ $where[]="project = :prj"; $params[':prj']=$project; }
 if($status!==''){ $where[]="status = :st"; $params[':st']=$status; }
+
+/* NEW: tambah kondisi WHERE untuk filter service (tanpa mengubah kondisi lain) */
+if($service!==''){ $where[] = "service = :svc"; $params[':svc'] = $service; }
+
 if($from!=='' && preg_match('/^\d{4}-\d{2}-\d{2}$/',$from)){ $where[]="created_at >= :fromd"; $params[':fromd']=$from.' 00:00:00'; }
 if($to!=='' && preg_match('/^\d{4}-\d{2}-\d{2}$/',$to)){ $where[]="created_at < :tod"; $params[':tod']=date('Y-m-d', strtotime($to.' +1 day')).' 00:00:00'; }
 $sqlWhere = $where?('WHERE '.implode(' AND ',$where)):'';
@@ -63,13 +69,22 @@ try{
   ]);
 }catch(Throwable $e){ http_response_code(500); echo '<pre>DB connect failed: '.h($e->getMessage()).'</pre>'; exit; }
 
+/* NEW: Ambil daftar service unik untuk dropdown (tanpa mengubah query yang lain) */
+$services = [];
+try {
+  $stSvc = $pdo->query("SELECT DISTINCT service FROM requests WHERE service IS NOT NULL AND service <> '' ORDER BY service");
+  $services = $stSvc->fetchAll(PDO::FETCH_COLUMN) ?: [];
+} catch(Throwable $e) {
+  $services = []; // fallback diam
+}
+
 /* == Export CSV == (biarkan seperti semula) */
 if($export==='csv'){
   $sql="SELECT server,site,project,service,latest_version,new_version,created_at,updated_at
         FROM requests $sqlWhere ORDER BY $sort $dir LIMIT 100000";
   $st=$pdo->prepare($sql); $st->execute($params);
   header('Content-Type: text/csv; charset=utf-8');
-  header('Content-Disposition: attachment; filename=\"requests_'.date('Ymd_His').'.csv\"');
+  header('Content-Disposition: attachment; filename=\"requests_'.date('Ymd_His').'\".csv');
   $out=fopen('php://output','w');
   fputcsv($out,['server','site','project','service','latest_version','new_version','created_at','updated_at']);
   while($r=$st->fetch()){ fputcsv($out,$r); }
@@ -102,7 +117,7 @@ function url_with($over){
 function badge($text){
   $colors=['STAGING'=>'#6366f1','PRODUCTION'=>'#966b9cff'];
   $bg=$colors[$text] ?? '#0ea5e9';
-  return '<span class=\"badge\" style=\"background:'.$bg.'\">'.h($text).'</span>';
+  return '<span class="badge" style="background:'.$bg.'">'.h($text).'</span>';
 }
 
 function badge_site($text){
@@ -302,6 +317,8 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
   font-size: 12px;
 }
 
+/* NEW: override jumlah kolom grid agar muat filter Service tanpa mengubah rule lama */
+.filters{ grid-template-columns: repeat(8, 1fr); }
 
 </style>
 
@@ -322,7 +339,7 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
     <form method="get" class="toolbar">
       <div class="filters">
         <input type="hidden" name="page" value="1">
-<input type="hidden" name="sort" value="<?=h($sort)?>">
+<input type="hidden" name="sort" value="<?=h($sort)\?>">
 <input type="hidden" name="dir"  value="<?=h(strtolower($dir)==='asc'?'asc':'desc')?>">
         <div><label>Search</label><input type="text" name="q" value="<?=h($q)?>" placeholder="nomor, service, version..."></div>
         <div><label>Server</label>
@@ -337,6 +354,16 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
             <option value="">(All)</option>
             <?php foreach(['BACKEND-JAVA','BACK-OFFICE-JAVA','WEB-EMR','PDF-GENERATOR'] as $p): ?>
               <option value="<?=$p?>" <?=$project===$p?'selected':''?>><?=$p?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+
+        <!-- NEW: Filter Service (diletakkan persis setelah Project) -->
+        <div><label>Service</label>
+          <select name="service">
+            <option value="">(All)</option>
+            <?php foreach($services as $svc): ?>
+              <option value="<?=h($svc)?>" <?=$service===$svc?'selected':''?>><?=h($svc)?></option>
             <?php endforeach; ?>
           </select>
         </div>
@@ -502,11 +529,15 @@ function submitNow(){
     q.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); submitNow(); }});
   }
 
-  // SELECT/DATE/PER PAGE: langsung submit saat berubah
+  // SELECT/DATE/PER PAGE: langsung submit saat berubah (kode lama tetap)
   ['server','project','from','to','pp'].forEach(name=>{
     const el = form.querySelector(`[name="${name}"]`);
     if(el) el.addEventListener('change', submitNow);
   });
+
+  // NEW: listener terpisah untuk 'service' (tidak mengubah array di atas)
+  const svc = form.querySelector('[name="service"]');
+  if(svc) svc.addEventListener('change', submitNow);
 })();
 </script>
 

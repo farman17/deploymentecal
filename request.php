@@ -31,6 +31,7 @@ $perPage = min(max((int)($_GET['pp'] ?? 20), 5), 200);
 $sort    = $_GET['sort'] ?? 'created_at';
 $dir     = strtolower($_GET['dir'] ?? 'desc') === 'asc' ? 'ASC' : 'DESC';
 $export  = $_GET['export'] ?? '';
+$site    = strtoupper(trim($_GET['site'] ?? ''));   // NEW
 
 /* NEW: filter service (penambahan variabel GET, tidak mengubah variabel yang ada) */
 $service = trim($_GET['service'] ?? '');
@@ -58,6 +59,9 @@ if($status!==''){ $where[]="status = :st"; $params[':st']=$status; }
 /* NEW: tambah kondisi WHERE untuk filter service (tanpa mengubah kondisi lain) */
 if($service!==''){ $where[] = "service = :svc"; $params[':svc'] = $service; }
 
+/* NEW: tambah kondisi WHERE untuk filter site (pakai UPPER untuk tahan case) */
+if($site!==''){ $where[] = "UPPER(site) = :site"; $params[':site'] = $site; }
+
 if($from!=='' && preg_match('/^\d{4}-\d{2}-\d{2}$/',$from)){ $where[]="created_at >= :fromd"; $params[':fromd']=$from.' 00:00:00'; }
 if($to!=='' && preg_match('/^\d{4}-\d{2}-\d{2}$/',$to)){ $where[]="created_at < :tod"; $params[':tod']=date('Y-m-d', strtotime($to.' +1 day')).' 00:00:00'; }
 $sqlWhere = $where?('WHERE '.implode(' AND ',$where)):'';
@@ -76,6 +80,15 @@ try {
   $services = $stSvc->fetchAll(PDO::FETCH_COLUMN) ?: [];
 } catch(Throwable $e) {
   $services = []; // fallback diam
+}
+
+/* NEW: Ambil daftar site unik untuk dropdown */
+$sites = [];
+try {
+  $stSite = $pdo->query("SELECT DISTINCT site FROM requests WHERE site IS NOT NULL AND site <> '' ORDER BY site");
+  $sites = $stSite->fetchAll(PDO::FETCH_COLUMN) ?: [];
+} catch(Throwable $e) {
+  $sites = [];
 }
 
 /* == Export CSV == (biarkan seperti semula) */
@@ -320,6 +333,9 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
 /* NEW: override jumlah kolom grid agar muat filter Service tanpa mengubah rule lama */
 .filters{ grid-template-columns: repeat(8, 1fr); }
 
+/* NEW: tambah 1 kolom lagi agar muat Site juga */
+.filters{ grid-template-columns: repeat(9, 1fr); }
+
 </style>
 
 
@@ -358,7 +374,17 @@ input,select{width:100%; padding:7px 9px; border-radius:8px; border:1px solid va
           </select>
         </div>
 
-        <!-- NEW: Filter Service (diletakkan persis setelah Project) -->
+        <!-- NEW: Filter Site (ditambahkan, tidak mengganti Project) -->
+        <div><label>Site</label>
+          <select name="site">
+            <option value="">(All)</option>
+            <?php foreach($sites as $s): $sUp = strtoupper($s); ?>
+              <option value="<?=h($sUp)?>" <?=$site===$sUp?'selected':''?>><?=h($s)?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+
+        <!-- NEW: Filter Service (diletakkan persis setelah Project/Site) -->
         <div><label>Service</label>
           <select name="service">
             <option value="">(All)</option>
@@ -538,6 +564,10 @@ function submitNow(){
   // NEW: listener terpisah untuk 'service' (tidak mengubah array di atas)
   const svc = form.querySelector('[name="service"]');
   if(svc) svc.addEventListener('change', submitNow);
+
+  // NEW: listener terpisah untuk 'site' (tidak mengubah array di atas)
+  const siteSel = form.querySelector('[name="site"]');
+  if(siteSel) siteSel.addEventListener('change', submitNow);
 })();
 </script>
 
